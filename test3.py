@@ -1,1 +1,0 @@
-kahit ano

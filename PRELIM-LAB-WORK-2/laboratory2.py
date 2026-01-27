@@ -1,4 +1,5 @@
 import time
+import os
 
 def bubble_sort_descending(arr):
     """
@@ -72,6 +73,40 @@ def merge_sort_descending(arr):
     
     return merge_sort_helper(arr.copy())
 
+def find_data_file():
+    """Search for data.txt in common locations"""
+    # Get current directory
+    current_dir = os.getcwd()
+    
+    # Possible locations to search
+    possible_paths = [
+        'data.txt',  # Current directory
+        os.path.join('PRELIM-LAB-WORK-1', 'data.txt'),
+        os.path.join('PRELIM-LAB-WORK-2', 'data.txt'),
+        os.path.join('..', 'PRELIM-LAB-WORK-1', 'data.txt'),
+        os.path.join('..', 'PRELIM-LAB-WORK-2', 'data.txt'),
+    ]
+    
+    print(f"\nCurrent directory: {current_dir}")
+    print("Searching for data.txt...")
+    
+    # Try each possible path
+    for path in possible_paths:
+        full_path = os.path.abspath(path)
+        if os.path.exists(full_path):
+            print(f"✓ Found data.txt at: {full_path}")
+            return full_path
+    
+    # If not found in common locations, search subdirectories
+    print("\nSearching in subdirectories...")
+    for root, dirs, files in os.walk(current_dir):
+        if 'data.txt' in files:
+            full_path = os.path.join(root, 'data.txt')
+            print(f"✓ Found data.txt at: {full_path}")
+            return full_path
+    
+    return None
+
 def load_data_from_file(filename='data.txt'):
     """Load data from text file"""
     try:
@@ -96,7 +131,7 @@ def load_custom_dataset():
     print("=" * 60)
     print("Choose input method:")
     print("1. Enter numbers manually (comma-separated)")
-    print("2. Load from a custom file")
+    print("2. Load from a custom file (enter full path)")
     print("3. Generate random numbers")
     print("=" * 60)
     
@@ -130,7 +165,7 @@ def enter_manual_data():
 
 def load_from_custom_file():
     """Load data from custom file"""
-    filename = input("\nEnter the filename (e.g., mydata.txt): ").strip()
+    filename = input("\nEnter the full path or filename (e.g., PRELIM-LAB-WORK-1/data.txt): ").strip()
     data = load_data_from_file(filename)
     if data:
         print(f"✓ Successfully loaded {len(data)} numbers from {filename}")
@@ -166,11 +201,7 @@ def display_results(sorted_data, elapsed_time, algorithm_name):
     print(f"Algorithm: {algorithm_name}")
     print("=" * 60)
     print(f"\nSorted array (Descending Order):")
-    if len(sorted_data) <= 50:
-        print(sorted_data)
-    else:
-        print(f"First 25 elements: {sorted_data[:25]}")
-        print(f"Last 25 elements: {sorted_data[-25:]}")
+    print(sorted_data)
     print("\n" + "=" * 60)
     print(f"Time spent: {elapsed_time:.6f} seconds")
     print(f"Time spent: {elapsed_time * 1000:.3f} milliseconds")
@@ -248,7 +279,7 @@ def choose_data_source():
     print("\n" + "=" * 60)
     print("DATA SOURCE SELECTION")
     print("=" * 60)
-    print("1. Load from data.txt (default)")
+    print("1. Auto-search for data.txt")
     print("2. Use custom dataset")
     print("=" * 60)
     
@@ -257,8 +288,22 @@ def choose_data_source():
     if choice == '2':
         return load_custom_dataset()
     else:
-        print("\nLoading data from data.txt...")
-        return load_data_from_file('data.txt')
+        print("\nSearching for data.txt...")
+        data_path = find_data_file()
+        
+        if data_path:
+            return load_data_from_file(data_path)
+        else:
+            print("\n❌ Could not find data.txt file!")
+            print("\nAvailable files in current directory:")
+            for item in os.listdir('.'):
+                print(f"  - {item}")
+            
+            retry = input("\nWould you like to enter the path manually? (y/n): ").strip().lower()
+            if retry == 'y':
+                filename = input("Enter the full path to data.txt: ").strip()
+                return load_data_from_file(filename)
+            return None
 
 def main():
     """Main program"""

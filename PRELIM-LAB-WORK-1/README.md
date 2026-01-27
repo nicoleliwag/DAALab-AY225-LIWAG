@@ -1,246 +1,271 @@
-# DAALab-AY225
-The DAA-Lab Repo
-# Laboratory 1: Bubble Sort Algorithm
+# Sorting Algorithms Laboratory Project
 
-## 📋 Project Overview
+## 📋 Overview
+This repository contains two comprehensive Python programs for analyzing and comparing various sorting algorithms, developed as part of the Design and Analysis of Algorithms course.
 
-This is a **console-based Python application** that implements the classic Bubble Sort algorithm. The program demonstrates fundamental sorting concepts and includes performance timing to measure execution efficiency. All output is displayed directly in the terminal/command-line interface.
-
-## 🖥️ Console-Based Interface
-
-This program runs entirely in the **command-line interface (CLI)**. The program executes predefined test cases and displays all results—including original arrays, sorted arrays, and execution times—directly in the console/terminal window.
-
-## ✨ Features
-
-### Core Functionality
-- ✅ **Bubble Sort Implementation** - Classic sorting algorithm with optimization
-- ⏱️ **Performance Timing** - Measures and displays execution time for each sort
-- 🔄 **Multiple Test Cases** - Includes various array scenarios
-- 📊 **Detailed Output** - Shows before/after comparison for each test
-
-### Algorithm Optimization
-- **Early Termination** - Stops if the array is already sorted
-- **Swap Detection** - Uses a flag to detect when no more swaps are needed
-- **Efficient Iteration** - Skips already-sorted elements at the end
-
-## 🎓 Algorithm Details
-
-### Bubble Sort
-**Bubble Sort** is a simple comparison-based sorting algorithm that repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order.
-
-### How It Works
-1. Compare adjacent elements in the array
-2. Swap them if they are in the wrong order (larger before smaller)
-3. Repeat this process for all elements
-4. After each pass, the largest unsorted element "bubbles up" to its correct position
-5. Continue until no more swaps are needed
-
-### Time Complexity
-- **Best Case**: O(n) - when array is already sorted
-- **Average Case**: O(n²) - typical random data
-- **Worst Case**: O(n²) - when array is reverse sorted
-- **Space Complexity**: O(1) - sorts in-place
-
-## 🚀 How to Run
-
-### Prerequisites
-- Python 3.x installed on your system
-
-### Execution Steps
-
-1. **Save the program**:
-   - Save the code as `bubble_sort.py`
-
-2. **Run the program** in terminal/command prompt:
-   ```bash
-   python bubble_sort.py
-   ```
-
-3. **View results** in the console:
-   - The program will automatically run all test cases
-   - Results are displayed directly in the terminal
-
-## 📖 Test Cases
-
-The program includes **four predefined test cases**:
-
-1. **Random Array**: `[64, 34, 25, 12, 22, 11, 90]`
-2. **Small Array**: `[5, 1, 4, 2, 8]`
-3. **Already Sorted**: `[1, 2, 3, 4, 5]`
-4. **Reverse Sorted**: `[5, 4, 3, 2, 1]`
-
-These test cases demonstrate different scenarios and help analyze algorithm performance.
-
-## 📊 Example Console Output
-
+## 🗂️ Project Structure
 ```
-Original: [64, 34, 25, 12, 22, 11, 90]
-Sorted:   [11, 12, 22, 25, 34, 64, 90]
-Time:     0.000012 seconds
-
-Original: [5, 1, 4, 2, 8]
-Sorted:   [1, 2, 4, 5, 8]
-Time:     0.000008 seconds
-
-Original: [1, 2, 3, 4, 5]
-Sorted:   [1, 2, 3, 4, 5]
-Time:     0.000003 seconds
-
-Original: [5, 4, 3, 2, 1]
-Sorted:   [1, 2, 3, 4, 5]
-Time:     0.000010 seconds
+.
+├── PRELIM-LAB-WORK-1/
+│   ├── data.txt                    # Dataset (10,000 integers)
+│   └── laboratory1.py              # Bubble Sort Implementation
+├── PRELIM-LAB-WORK-2/
+│   ├── data.txt                    # Dataset (10,000 integers)
+│   └── sorting_algorithms.py      # Multi-Algorithm Comparison
+└── README.md
 ```
-
-## 🔬 Understanding the Results
-
-### Performance Observations
-
-- **Already Sorted Array**: Shows fastest execution time due to early termination optimization
-- **Reverse Sorted Array**: Takes longer as it requires maximum number of swaps
-- **Random Arrays**: Execution time varies based on initial order
-
-### Time Measurements
-
-The program displays execution time in seconds with microsecond precision (6 decimal places), allowing you to observe:
-- Algorithm efficiency on different data patterns
-- Impact of optimization (early termination)
-- Performance scalability with array size
-
-## 🛠️ Technical Implementation
-
-### Key Components
-
-```python
-def bubble_sort(arr):
-    """Sorts array using bubble sort with optimization"""
-    - Implements nested loops for comparison
-    - Uses swapped flag for early termination
-    - Returns both sorted array and execution time
-```
-
-### Optimization Details
-
-1. **Swapped Flag**: Detects if any swaps occurred in a pass
-2. **Early Exit**: Breaks out of loop if no swaps (array is sorted)
-3. **Range Reduction**: Each pass reduces the comparison range
-
-### Function Design
-
-- **Input**: List of comparable elements
-- **Output**: Tuple containing (sorted list, execution time)
-- **Non-destructive**: Uses `.copy()` to preserve original array
-
-## 💡 Modifying the Program
-
-### Adding Custom Test Cases
-
-You can easily add your own test arrays:
-
-```python
-test_arrays = [
-    [64, 34, 25, 12, 22, 11, 90],  # Existing
-    [100, 50, 25, 75, 10],         # Your custom array
-    [9, 7, 5, 3, 1],               # Another test case
-]
-```
-
-### Testing with User Input
-
-To accept user input from the console:
-
-```python
-# Add this code before the main loop
-user_input = input("Enter numbers separated by spaces: ")
-user_array = [int(x) for x in user_input.split()]
-test_arrays.append(user_array)
-```
-
-## 📁 File Structure
-
-```
-Laboratory-1/
-│
-├── bubble_sort.py    # Main program file
-└── README.md         # This documentation
-```
-
-## 🎯 Educational Purpose
-
-This laboratory exercise demonstrates:
-
-- ✅ Implementation of a fundamental sorting algorithm
-- ✅ Algorithm optimization techniques
-- ✅ Performance measurement and analysis
-- ✅ Time complexity concepts in practice
-- ✅ Python function design and documentation
-- ✅ Console-based program development
-
-## 📊 Algorithm Visualization
-
-### Bubble Sort Process (Example)
-
-```
-Pass 1: [64, 34, 25, 12, 22, 11, 90]
-        [34, 64, 25, 12, 22, 11, 90]
-        [34, 25, 64, 12, 22, 11, 90]
-        [34, 25, 12, 64, 22, 11, 90]
-        [34, 25, 12, 22, 64, 11, 90]
-        [34, 25, 12, 22, 11, 64, 90]
-        ✓ 90 is now in correct position
-
-Pass 2: [25, 34, 12, 22, 11, 64, 90]
-        ... (continues until sorted)
-```
-
-## ⚙️ When to Use Bubble Sort
-
-### Good For:
-- 📚 Educational purposes and learning
-- 📝 Small datasets (< 50 elements)
-- ✅ Nearly sorted data (due to optimization)
-- 🔍 Understanding sorting fundamentals
-
-### Not Ideal For:
-- ❌ Large datasets (> 1000 elements)
-- ❌ Performance-critical applications
-- ❌ Production systems requiring efficiency
-
-## 🔄 Comparison with Other Algorithms
-
-| Algorithm      | Time (Best) | Time (Average) | Time (Worst) | Space |
-|---------------|-------------|----------------|--------------|-------|
-| Bubble Sort   | O(n)        | O(n²)          | O(n²)        | O(1)  |
-| Quick Sort    | O(n log n)  | O(n log n)     | O(n²)        | O(log n) |
-| Merge Sort    | O(n log n)  | O(n log n)     | O(n log n)   | O(n)  |
-| Insertion Sort| O(n)        | O(n²)          | O(n²)        | O(1)  |
-
-## 📝 Notes
-
-- ✅ Sorts in **ascending order** (smallest to largest)
-- ✅ **Console-based** - no graphical interface required
-- ✅ **In-place sorting** - minimal memory usage
-- ✅ **Stable sort** - maintains relative order of equal elements
-- ✅ Execution times may vary based on system performance
-
-## 🧪 Testing Recommendations
-
-To thoroughly test the implementation:
-
-1. **Small arrays** (3-5 elements)
-2. **Medium arrays** (10-50 elements)
-3. **Edge cases**:
-   - Empty array: `[]`
-   - Single element: `[1]`
-   - Two elements: `[2, 1]`
-   - Duplicates: `[3, 1, 2, 1, 3]`
-
-## 👨‍💻 Author
-
-Laboratory 1 - Bubble Sort Implementation
 
 ---
 
-**Platform**: Console/Terminal Application  
-**Language**: Python 3.x  
-**Type**: Educational/Academic Project  
-**Algorithm**: Bubble Sort (Optimized)
+## 📁 Laboratory 1: Bubble Sort Implementation
+
+### Description
+Implementation of the classic Bubble Sort algorithm with comprehensive testing and analysis on a dataset of 10,000 integers.
+
+### Features
+- ✅ Classic Bubble Sort with optimization (early termination)
+- ✅ Dataset generation (random integers)
+- ✅ Auto-search for `data.txt` in project folders
+- ✅ Execution time measurement (seconds & milliseconds)
+- ✅ Sorting verification system
+- ✅ Dataset statistics and analysis
+- ✅ Save/load functionality for datasets
+
+### Implementation Requirements Met
+1. **Dataset**: 10,000 integers in random order
+2. **Algorithm**: Classic Bubble Sort (O(n²) time complexity)
+3. **Metrics**: 
+   - Complete sorted array output
+   - Execution time in seconds and milliseconds
+   - Verification of correctness
+4. **Language**: Python 3.x
+
+### Usage
+```bash
+cd PRELIM-LAB-WORK-1
+python laboratory1.py
+```
+
+### Menu Options
+1. Generate new random dataset (10,000 integers)
+2. Auto-search and load data.txt
+3. Load dataset from custom file path
+4. Run Bubble Sort on current dataset
+5. View dataset statistics
+6. Save current dataset to file
+7. Exit
+
+### Performance
+- **Time Complexity**: O(n²) worst case, O(n) best case (optimized)
+- **Space Complexity**: O(1)
+- **Tested on**: 10,000 random integers
+
+---
+
+## 📁 Laboratory 2: Sorting Algorithms Comparison
+
+### Description
+A comprehensive menu-driven program that implements and compares three fundamental sorting algorithms: Bubble Sort, Insertion Sort, and Merge Sort.
+
+### Features
+- ✅ Three sorting algorithms implemented:
+  - **Bubble Sort** - O(n²)
+  - **Insertion Sort** - O(n²)
+  - **Merge Sort** - O(n log n)
+- ✅ Descending order sorting
+- ✅ Performance comparison mode
+- ✅ Auto-search for `data.txt` files
+- ✅ Custom dataset support (manual input, file loading, random generation)
+- ✅ Execution time measurement for each algorithm
+- ✅ Complete sorted array display
+
+### Usage
+```bash
+cd PRELIM-LAB-WORK-2
+python sorting_algorithms.py
+```
+
+### Menu Options
+1. Bubble Sort
+2. Insertion Sort
+3. Merge Sort
+4. Compare All Algorithms
+5. Load New Dataset
+6. Exit
+
+### Algorithm Comparison
+| Algorithm | Time Complexity (Worst) | Time Complexity (Best) | Space Complexity |
+|-----------|------------------------|----------------------|------------------|
+| Bubble Sort | O(n²) | O(n) | O(1) |
+| Insertion Sort | O(n²) | O(n) | O(1) |
+| Merge Sort | O(n log n) | O(n log n) | O(n) |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Python 3.6 or higher
+- No external libraries required (uses only standard library)
+
+### Installation
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd <repository-name>
+```
+
+2. Verify Python installation:
+```bash
+python --version
+```
+
+### Running the Programs
+
+#### Option 1: Run Laboratory 1
+```bash
+cd PRELIM-LAB-WORK-1
+python laboratory1.py
+```
+
+#### Option 2: Run Laboratory 2
+```bash
+cd PRELIM-LAB-WORK-2
+python sorting_algorithms.py
+```
+
+---
+
+## 📊 Data Format
+
+### data.txt Structure
+The `data.txt` file contains integers, one per line:
+```
+9999
+9998
+9997
+...
+3
+2
+1
+```
+
+### Custom Dataset Options
+Both programs support:
+- **Auto-detection**: Automatically finds `data.txt` in project folders
+- **Manual input**: Enter comma-separated integers
+- **File loading**: Load from any custom file path
+- **Random generation**: Generate datasets with specified size and range
+
+---
+
+## 🧪 Testing
+
+### Laboratory 1 Testing
+```bash
+# Generate random dataset
+Choose option 1 → Enter size (e.g., 10000)
+
+# Load existing data
+Choose option 2 → Auto-searches for data.txt
+
+# Run sorting
+Choose option 4 → View results and execution time
+```
+
+### Laboratory 2 Testing
+```bash
+# Compare all algorithms
+Choose option 1 → Auto-search for data.txt
+Choose option 4 → See performance comparison
+
+# Test individual algorithms
+Choose options 1-3 for specific algorithms
+```
+
+---
+
+## 📈 Performance Results
+
+### Sample Output (10,000 integers)
+```
+BUBBLE SORT RESULTS
+====================================================================
+Array size: 10000 elements
+Execution time: 8.234567 seconds
+Execution time: 8234.567 milliseconds
+Sorting verification: ✓ PASSED
+====================================================================
+```
+
+---
+
+## 🛠️ Technical Details
+
+### Environment
+- **Language**: Python 3.x
+- **Standard Libraries Used**:
+  - `time` - Execution time measurement
+  - `random` - Random dataset generation
+  - `os` - File system operations
+
+### Code Structure
+Both programs follow clean coding principles:
+- Well-documented functions with docstrings
+- Modular design for easy maintenance
+- Error handling for file operations
+- Input validation for user entries
+
+---
+
+## 📝 Implementation Notes
+
+### Bubble Sort (Laboratory 1)
+- Implements optimized version with early termination
+- Swaps adjacent elements if out of order
+- Stops if no swaps occur in a complete pass
+
+### Sorting Algorithms (Laboratory 2)
+- **Bubble Sort**: Exchange sort with optimization flag
+- **Insertion Sort**: Builds sorted array one element at a time
+- **Merge Sort**: Divide-and-conquer approach with merging
+
+---
+
+## 🐛 Troubleshooting
+
+### Issue: "data.txt not found"
+**Solution**: Use auto-search option (Option 2) or enter full path
+```bash
+# Example paths:
+PRELIM-LAB-WORK-1/data.txt
+C:/path/to/PRELIM-LAB-WORK-1/data.txt
+```
+
+### Issue: Large dataset performance
+**Solution**: Use Merge Sort for datasets > 5,000 elements (O(n log n))
+
+### Issue: File encoding errors
+**Solution**: Ensure `data.txt` uses UTF-8 encoding
+
+---
+
+## 📄 License
+This project is created for educational purposes as part of coursework requirements.
+
+---
+
+## 🙏 Acknowledgments
+- Course Instructor: Nicole Liwag
+- Design and Analysis of Algorithms Course Materials
+- Python Documentation
+
+## 🔄 Version History
+- **v1.0.0** (2025-01-27)
+  - Initial release
+  - Laboratory 1: Bubble Sort implementation
+  - Laboratory 2: Multi-algorithm comparison
+  - Auto-search functionality for data files
+  - Comprehensive documentation
+
+

@@ -1,201 +1,353 @@
-# DAALab-AY225
-The DAA-Lab Repo
-# Laboratory 2: Sorting Algorithms
+# Sorting Algorithms Laboratory Project
 
-## 📋 Project Overview
+## 📋 Overview
+This repository contains two comprehensive Python programs for analyzing and comparing various sorting algorithms, developed as part of the Design and Analysis of Algorithms course.
 
-This is a **console-based Python application** that implements and compares three classic sorting algorithms: Bubble Sort, Insertion Sort, and Merge Sort. All algorithms are configured to sort data in descending order, and the program provides comprehensive performance analysis and timing comparisons.
-
-## 🖥️ Console-Based Interface
-
-This program runs entirely in the **command-line interface (CLI)**. All interactions, including data input, algorithm selection, and results display, are performed through text-based menus and prompts in the console/terminal.
-
-## ✨ Features
-
-### Sorting Algorithms Implemented
-1. **Bubble Sort** - Time Complexity: O(n²)
-2. **Insertion Sort** - Time Complexity: O(n²)
-3. **Merge Sort** - Time Complexity: O(n log n)
-
-### Core Functionality
-- ✅ Sort arrays in **descending order**
-- ⏱️ Measure and display execution time for each algorithm
-- 📊 Compare performance of all three algorithms simultaneously
-- 🔄 Multiple data input methods
-- ✔️ Result verification with min/max values
-
-## 📥 Data Input Methods
-
-The program supports **four flexible ways** to load data:
-
-1. **Default File** - Load from `data.txt` (one number per line)
-2. **Manual Entry** - Enter comma-separated numbers directly
-3. **Custom File** - Specify your own text file
-4. **Random Generation** - Generate random datasets with custom size and value range
-
-## 🚀 How to Run
-
-### Prerequisites
-- Python 3.x installed on your system
-
-### Execution Steps
-
-1. **Prepare your data file** (optional):
-   ```
-   Create a file named data.txt with one integer per line:
-   42
-   15
-   88
-   3
-   67
-   ```
-
-2. **Run the program**:
-   ```bash
-   python sorting_algorithms.py
-   ```
-
-3. **Follow the console prompts**:
-   - Choose your data source
-   - Select sorting algorithm or comparison mode
-   - View results in the terminal
-
-## 📖 Usage Guide
-
-### Main Menu Options
-
+## 🗂️ Project Structure
 ```
-1. Bubble Sort        - Sort using bubble sort algorithm
-2. Insertion Sort     - Sort using insertion sort algorithm
-3. Merge Sort         - Sort using merge sort algorithm
-4. Compare All        - Run all algorithms and compare performance
-5. Load New Dataset   - Change the current dataset
-6. Exit               - Close the program
+.
+├── PRELIM-LAB-WORK-1/
+│   ├── data.txt                    # Dataset (10,000 integers)
+│   └── laboratory1.py              # Bubble Sort Implementation
+├── PRELIM-LAB-WORK-2/
+│   ├── data.txt                    # Dataset (10,000 integers)
+│   └── sorting_algorithms.py      # Multi-Algorithm Comparison
+└── README.md
 ```
-
-### Example Console Session
-
-```
-==============================================================
-SORTING ALGORITHMS PROGRAM
-==============================================================
-
-DATA SOURCE SELECTION
-1. Load from data.txt (default)
-2. Use custom dataset
-
-Enter your choice (1-2): 1
-
-✓ Successfully loaded 100 numbers
-
-==============================================================
-SORTING ALGORITHMS - DESCENDING ORDER
-==============================================================
-1. Bubble Sort
-2. Insertion Sort
-3. Merge Sort
-4. Compare All Algorithms
-5. Load New Dataset
-6. Exit
-
-Enter your choice (1-6): 3
-
-Executing Merge Sort...
-
-==============================================================
-Algorithm: Merge Sort
-==============================================================
-
-Sorted array (Descending Order):
-[95, 94, 93, 92, 91, ...]
-
-Time spent: 0.000523 seconds
-Time spent: 0.523 milliseconds
-==============================================================
-```
-
-## 📊 Output Information
-
-Each sorting operation displays:
-- ✅ Sorted array (full or truncated for large datasets)
-- ⏱️ Execution time in seconds and milliseconds
-- 📈 Array size verification
-- 🔝 Maximum value (first element)
-- 🔽 Minimum value (last element)
-
-## 🔬 Performance Comparison
-
-The **Compare All Algorithms** feature runs all three sorting algorithms on the same dataset and provides:
-- Individual execution times
-- Side-by-side performance comparison table
-- Identification of the fastest algorithm
-
-## 📁 File Structure
-
-```
-Laboratory-2/
-│
-├── sorting_algorithms.py    # Main program file
-├── data.txt                  # Default data file (optional)
-└── README.md                 # This documentation
-```
-
-## 🛠️ Technical Details
-
-### Algorithm Implementations
-
-- **Non-destructive**: All sorting functions create copies of the input array
-- **Optimized Bubble Sort**: Includes early termination when no swaps occur
-- **Stable Merge Sort**: Maintains relative order of equal elements
-- **Efficient Insertion Sort**: Uses while loop for proper element placement
-
-### Time Complexity Summary
-
-| Algorithm      | Best Case  | Average Case | Worst Case |
-|---------------|------------|--------------|------------|
-| Bubble Sort   | O(n)       | O(n²)        | O(n²)      |
-| Insertion Sort| O(n)       | O(n²)        | O(n²)      |
-| Merge Sort    | O(n log n) | O(n log n)   | O(n log n) |
-
-## ⚠️ Error Handling
-
-The program includes robust error handling for:
-- Missing or invalid data files
-- Invalid user input
-- Empty datasets
-- Non-integer values
-- Invalid file formats
-
-## 💡 Tips for Best Results
-
-1. **Small datasets** (< 1000 elements): All algorithms perform reasonably well
-2. **Medium datasets** (1000-10000): Merge Sort shows clear advantages
-3. **Large datasets** (> 10000): Merge Sort significantly outperforms others
-4. **Nearly sorted data**: Insertion Sort may perform surprisingly well
-
-## 🎯 Educational Purpose
-
-This laboratory exercise demonstrates:
-- Implementation of fundamental sorting algorithms
-- Algorithm performance analysis
-- Time complexity concepts
-- Console-based program design
-- User input validation
-- Modular code organization
-
-## 📝 Notes
-
-- All sorting operations are performed in **descending order** (highest to lowest)
-- The program is **purely console-based** - no GUI required
-- Original data is preserved; sorting operations work on copies
-- Large datasets (> 50 elements) show truncated output for readability
-
-## 👨‍💻 Author
-
-Laboratory 2 - Sorting Algorithms Implementation
 
 ---
 
-**Platform**: Console/Terminal Application  
-**Language**: Python 3.x  
-**Type**: Educational/Academic Project
+## 📁 Laboratory 1: Bubble Sort Implementation
+
+### Description
+Implementation of the classic Bubble Sort algorithm with comprehensive testing and analysis on a dataset of 10,000 integers.
+
+### Features
+- ✅ Classic Bubble Sort with optimization (early termination)
+- ✅ Dataset generation (random integers)
+- ✅ Auto-search for `data.txt` in project folders
+- ✅ Execution time measurement (seconds & milliseconds)
+- ✅ Sorting verification system
+- ✅ Dataset statistics and analysis
+- ✅ Save/load functionality for datasets
+
+### Implementation Requirements Met
+1. **Dataset**: 10,000 integers in random order
+2. **Algorithm**: Classic Bubble Sort (O(n²) time complexity)
+3. **Metrics**: 
+   - Complete sorted array output
+   - Execution time in seconds and milliseconds
+   - Verification of correctness
+4. **Language**: Python 3.x
+
+### Usage
+```bash
+cd PRELIM-LAB-WORK-1
+python laboratory1.py
+```
+
+### Menu Options
+1. Generate new random dataset (10,000 integers)
+2. Auto-search and load data.txt
+3. Load dataset from custom file path
+4. Run Bubble Sort on current dataset
+5. View dataset statistics
+6. Save current dataset to file
+7. Exit
+
+### Performance
+- **Time Complexity**: O(n²) worst case, O(n) best case (optimized)
+- **Space Complexity**: O(1)
+- **Tested on**: 10,000 random integers
+
+---
+
+## 📁 Laboratory 2: Sorting Algorithms Comparison
+
+### Description
+A comprehensive menu-driven program that implements and compares three fundamental sorting algorithms: Bubble Sort, Insertion Sort, and Merge Sort. All algorithms sort in **descending order** and include auto-detection of data files from the project structure.
+
+### Features
+- ✅ Three sorting algorithms implemented:
+  - **Bubble Sort** - O(n²) with early termination optimization
+  - **Insertion Sort** - O(n²) comparison-based sorting
+  - **Merge Sort** - O(n log n) divide-and-conquer approach
+- ✅ **Descending order sorting** for all algorithms
+- ✅ Performance comparison mode (runs all three and shows results)
+- ✅ Auto-search for `data.txt` in PRELIM-LAB-WORK folders
+- ✅ Multiple dataset input options:
+  - Manual input (comma-separated values)
+  - File loading with custom paths
+  - Random number generation
+- ✅ Execution time measurement (seconds & milliseconds)
+- ✅ Complete sorted array display with verification
+- ✅ Dataset statistics and management
+
+### File: laboratory2.py
+
+### Usage
+```bash
+cd PRELIM-LAB-WORK-2
+python laboratory2.py
+```
+
+### Menu Options
+1. **Bubble Sort** - Run bubble sort on current dataset
+2. **Insertion Sort** - Run insertion sort on current dataset
+3. **Merge Sort** - Run merge sort on current dataset
+4. **Compare All Algorithms** - Execute all three and display performance comparison
+5. **Load New Dataset** - Change the current dataset
+6. **Exit** - Close the program
+
+### Data Source Selection
+When starting the program, you can choose:
+1. **Auto-search for data.txt** - Automatically finds data.txt in:
+   - Current directory
+   - PRELIM-LAB-WORK-1 folder
+   - PRELIM-LAB-WORK-2 folder
+   - Parent directory paths
+   - All subdirectories (recursive search)
+2. **Use custom dataset** - Enter data manually, from file, or generate random
+
+### Algorithm Details
+
+#### Bubble Sort
+- **Implementation**: Exchange sort with optimization flag
+- **Time Complexity**: O(n²) worst/average, O(n) best case
+- **Space Complexity**: O(1)
+- **Best for**: Small datasets, nearly sorted data
+- **Feature**: Early termination when no swaps occur
+
+#### Insertion Sort
+- **Implementation**: Builds sorted array one element at a time
+- **Time Complexity**: O(n²) worst/average, O(n) best case
+- **Space Complexity**: O(1)
+- **Best for**: Small datasets, online sorting (data arrives in real-time)
+- **Feature**: Efficient for nearly sorted data
+
+#### Merge Sort
+- **Implementation**: Divide-and-conquer with recursive merging
+- **Time Complexity**: O(n log n) in all cases
+- **Space Complexity**: O(n)
+- **Best for**: Large datasets, guaranteed O(n log n) performance
+- **Feature**: Stable sort, predictable performance
+
+### Algorithm Comparison Table
+| Algorithm | Time Complexity (Worst) | Time Complexity (Best) | Space Complexity | Stable | In-Place |
+|-----------|------------------------|----------------------|------------------|---------|----------|
+| Bubble Sort | O(n²) | O(n) | O(1) | Yes | Yes |
+| Insertion Sort | O(n²) | O(n) | O(1) | Yes | Yes |
+| Merge Sort | O(n log n) | O(n log n) | O(n) | Yes | No |
+
+### Sample Output
+```
+============================================================
+COMPARING ALL SORTING ALGORITHMS
+============================================================
+
+Executing Bubble Sort...
+  ✓ Completed in 8.234567 seconds (8234.567 ms)
+
+Executing Insertion Sort...
+  ✓ Completed in 4.123456 seconds (4123.456 ms)
+
+Executing Merge Sort...
+  ✓ Completed in 0.045678 seconds (45.678 ms)
+
+============================================================
+PERFORMANCE COMPARISON
+============================================================
+Algorithm            Time (seconds)       Time (ms)      
+------------------------------------------------------------
+Bubble Sort          8.234567             8234.567       
+Insertion Sort       4.123456             4123.456       
+Merge Sort           0.045678             45.678         
+============================================================
+
+Fastest Algorithm: Merge Sort (0.045678 seconds)
+============================================================
+```
+
+### Custom Dataset Options
+
+#### Option 1: Manual Input
+```
+Enter numbers separated by commas:
+Numbers: 10, 5, 8, 3, 1, 9, 2, 7, 6, 4
+✓ Successfully loaded 10 numbers
+```
+
+#### Option 2: File Loading
+```
+Enter the full path or filename:
+Path: PRELIM-LAB-WORK-1/data.txt
+✓ Successfully loaded 10000 numbers from PRELIM-LAB-WORK-1/data.txt
+```
+
+#### Option 3: Random Generation
+```
+Enter the number of elements to generate: 1000
+Enter minimum value: 1
+Enter maximum value: 10000
+✓ Successfully generated 1000 random numbers
+```
+
+### Performance Testing
+The program has been tested with:
+- **Small datasets**: 10-100 elements
+- **Medium datasets**: 1,000-5,000 elements
+- **Large datasets**: 10,000+ elements
+
+**Recommendation**: For datasets larger than 5,000 elements, Merge Sort significantly outperforms Bubble Sort and Insertion Sort.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Python 3.6 or higher
+- No external libraries required (uses only standard library)
+
+### Installation
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd <repository-name>
+```
+
+2. Verify Python installation:
+```bash
+python --version
+```
+
+### Running the Programs
+
+#### Option 1: Run Laboratory 1
+```bash
+cd PRELIM-LAB-WORK-1
+python laboratory1.py
+```
+
+#### Option 2: Run Laboratory 2
+```bash
+cd PRELIM-LAB-WORK-2
+python sorting_algorithms.py
+```
+
+---
+
+## 📊 Data Format
+
+### data.txt Structure
+The `data.txt` file contains integers, one per line:
+```
+9999
+9998
+9997
+...
+3
+2
+1
+```
+
+### Custom Dataset Options
+Both programs support:
+- **Auto-detection**: Automatically finds `data.txt` in project folders
+- **Manual input**: Enter comma-separated integers
+- **File loading**: Load from any custom file path
+- **Random generation**: Generate datasets with specified size and range
+
+---
+
+## 🧪 Testing
+
+### Laboratory 1 Testing
+```bash
+# Generate random dataset
+Choose option 1 → Enter size (e.g., 10000)
+
+# Load existing data
+Choose option 2 → Auto-searches for data.txt
+
+# Run sorting
+Choose option 4 → View results and execution time
+```
+
+### Laboratory 2 Testing
+```bash
+# Compare all algorithms
+Choose option 1 → Auto-search for data.txt
+Choose option 4 → See performance comparison
+
+# Test individual algorithms
+Choose options 1-3 for specific algorithms
+```
+
+---
+
+## 📈 Performance Results
+
+### Sample Output (10,000 integers)
+```
+BUBBLE SORT RESULTS
+====================================================================
+Array size: 10000 elements
+Execution time: 8.234567 seconds
+Execution time: 8234.567 milliseconds
+Sorting verification: ✓ PASSED
+====================================================================
+```
+
+---
+
+## 🛠️ Technical Details
+
+### Environment
+- **Language**: Python 3.x
+- **Standard Libraries Used**:
+  - `time` - Execution time measurement
+  - `random` - Random dataset generation
+  - `os` - File system operations
+
+### Code Structure
+Both programs follow clean coding principles:
+- Well-documented functions with docstrings
+- Modular design for easy maintenance
+- Error handling for file operations
+- Input validation for user entries
+
+---
+
+## 📝 Implementation Notes
+
+### Bubble Sort (Laboratory 1)
+- Implements optimized version with early termination
+- Swaps adjacent elements if out of order
+- Stops if no swaps occur in a complete pass
+
+### Sorting Algorithms (Laboratory 2)
+- **Bubble Sort**: Exchange sort with optimization flag
+- **Insertion Sort**: Builds sorted array one element at a time
+- **Merge Sort**: Divide-and-conquer approach with merging
+
+---
+
+## 🐛 Troubleshooting
+
+### Issue: "data.txt not found"
+**Solution**: Use auto-search option (Option 2) or enter full path
+```bash
+# Example paths:
+PRELIM-LAB-WORK-1/data.txt
+C:/path/to/PRELIM-LAB-WORK-1/data.txt
+```
+
+### Issue: Large dataset performance
+**Solution**: Use Merge Sort for datasets > 5,000 elements (O(n log n))
+
+### Issue: File encoding errors
+**Solution**: Ensure `data.txt` uses UTF-8 encoding
+
+## 📄 License
+This project is created for educational purposes as part of coursework requirements.
+

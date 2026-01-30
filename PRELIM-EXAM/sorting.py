@@ -17,55 +17,79 @@ class Record:
 class SortingAlgorithms:
 
     @staticmethod
-    def bubble_sort(data, key, progress=None):
+    def bubble_sort(data, key, progress, pause_event, stop_event):
         arr = data.copy()
         n = len(arr)
         for i in range(n):
+            if stop_event.is_set():
+                return None
+            pause_event.wait()
             for j in range(0, n - i - 1):
                 if key(arr[j]) > key(arr[j + 1]):
                     arr[j], arr[j + 1] = arr[j + 1], arr[j]
-            if progress:
-                progress(i + 1, n)
+            progress(i + 1, n)
         return arr
 
     @staticmethod
-    def insertion_sort(data, key, progress=None):
+    def insertion_sort(data, key, progress, pause_event, stop_event):
         arr = data.copy()
         n = len(arr)
         for i in range(1, n):
+            if stop_event.is_set():
+                return None
+            pause_event.wait()
             cur = arr[i]
             j = i - 1
             while j >= 0 and key(arr[j]) > key(cur):
                 arr[j + 1] = arr[j]
                 j -= 1
             arr[j + 1] = cur
-            if progress:
-                progress(i + 1, n)
+            progress(i + 1, n)
         return arr
 
     @staticmethod
-    def merge_sort(data, key, progress=None):
+    def merge_sort(data, key, progress, pause_event, stop_event):
+        total = len(data)
+        completed = [0]  # Use list to allow modification in nested function
+        update_interval = max(1, total // 100)  # Update progress bar 100 times
+        
         def merge(left, right):
             result = []
-            i = j = 0
-            while i < len(left) and j < len(right):
-                if key(left[i]) <= key(right[j]):
-                    result.append(left[i]); i += 1
+            while left and right:
+                pause_event.wait()
+                if stop_event.is_set():
+                    return []
+                if key(left[0]) <= key(right[0]):
+                    result.append(left.pop(0))
                 else:
-                    result.append(right[j]); j += 1
-            result.extend(left[i:])
-            result.extend(right[j:])
+                    result.append(right.pop(0))
+            result.extend(left)
+            result.extend(right)
             return result
 
         def sort(arr):
+            pause_event.wait()
+            if stop_event.is_set():
+                return []
             if len(arr) <= 1:
+                completed[0] += len(arr)
+                if completed[0] % update_interval == 0:
+                    progress(completed[0], total)
                 return arr
             mid = len(arr) // 2
-            return merge(sort(arr[:mid]), sort(arr[mid:]))
+            left_sorted = sort(arr[:mid])
+            right_sorted = sort(arr[mid:])
+            merged = merge(left_sorted, right_sorted)
+            
+            # Update progress after merge
+            if len(merged) > 1:
+                if completed[0] % update_interval == 0:
+                    progress(completed[0], total)
+            
+            return merged
 
         result = sort(data.copy())
-        if progress:
-            progress(len(result), len(result))
+        progress(total, total)
         return result
 
 
@@ -75,35 +99,62 @@ class SortingBenchmarkGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Sorting Algorithm Stress Test")
-        self.root.geometry("1000x700")
+        self.root.geometry("1000x760")
 
         self.data: List[Record] = []
+        self.sorted_result: List[Record] = []
+        self.loaded_file = None
 
+        self.pause_event = threading.Event()
+        self.pause_event.set()
+        self.stop_event = threading.Event()
+
+        self.start_time = None
+        self.end_time = None
+
+        self.setup_style()
         self.build_ui()
+
+    # ---------- STYLE ----------
+    def setup_style(self):
+        style = ttk.Style()
+        style.theme_use("clam")
+
+        BG = "#f7f9fc"
+        FG = "#1f2933"
+        ACCENT = "#2563eb"
+        BORDER = "#d1d5db"
+
+        self.root.configure(bg=BG)
+
+        style.configure(".", background=BG, foreground=FG, font=("Segoe UI", 10))
+        style.configure("Title.TLabel", font=("Segoe UI Semibold", 17), foreground=ACCENT)
+        style.configure("TButton", padding=(12, 6), background=ACCENT, foreground="white")
+        style.map("TButton", background=[("active", "#1d4ed8")])
+        style.configure("TProgressbar", thickness=12, troughcolor=BORDER, background=ACCENT)
 
     # ---------- UI ----------
     def build_ui(self):
         container = ttk.Frame(self.root, padding=20)
         container.pack(expand=True, fill="both")
 
-        title = ttk.Label(
+        ttk.Label(
             container,
             text="Sorting Algorithm Stress Test – Benchmarking Tool",
-            font=("Segoe UI", 16, "bold")
-        )
-        title.pack(pady=(0, 15))
+            style="Title.TLabel"
+        ).pack(pady=(0, 20))
 
-        # Controls
+        # Top controls
         controls = ttk.Frame(container)
-        controls.pack(pady=10)
+        controls.pack()
 
-        ttk.Button(controls, text="Load CSV", command=self.load_csv).grid(row=0, column=0, padx=5)
+        ttk.Button(controls, text="Load CSV", command=self.load_csv).grid(row=0, column=0, padx=6)
 
-        ttk.Label(controls, text="Rows:").grid(row=0, column=1, padx=5)
+        ttk.Label(controls, text="Rows:").grid(row=0, column=1)
         self.rows_var = tk.StringVar(value="1000")
         ttk.Entry(controls, textvariable=self.rows_var, width=8).grid(row=0, column=2)
 
-        ttk.Label(controls, text="Column:").grid(row=0, column=3, padx=5)
+        ttk.Label(controls, text="Column:").grid(row=0, column=3)
         self.col_var = tk.StringVar(value="ID")
         ttk.Combobox(
             controls,
@@ -113,7 +164,7 @@ class SortingBenchmarkGUI:
             width=12
         ).grid(row=0, column=4)
 
-        ttk.Label(controls, text="Algorithm:").grid(row=0, column=5, padx=5)
+        ttk.Label(controls, text="Algorithm:").grid(row=0, column=5)
         self.algo_var = tk.StringVar(value="Merge Sort")
         ttk.Combobox(
             controls,
@@ -123,31 +174,43 @@ class SortingBenchmarkGUI:
             width=14
         ).grid(row=0, column=6)
 
-        ttk.Button(controls, text="Start Sorting", command=self.start_sort).grid(row=0, column=7, padx=10)
+        # Action buttons
+        action_buttons = ttk.Frame(container)
+        action_buttons.pack(pady=12)
 
-        # Progress
+        ttk.Button(action_buttons, text="▶ Start", command=self.start_sort).grid(row=0, column=0, padx=6)
+        ttk.Button(action_buttons, text="⏸ Pause", command=self.pause_sort).grid(row=0, column=1, padx=6)
+        ttk.Button(action_buttons, text="⏹ Stop", command=self.stop_sort).grid(row=0, column=2, padx=6)
+
         self.progress = ttk.Progressbar(container, mode="determinate")
         self.progress.pack(fill="x", pady=(10, 5))
 
         self.status = ttk.Label(container, text="Ready")
         self.status.pack(anchor="w")
 
+        self.file_label = ttk.Label(container, text="No file loaded", foreground="#6b7280")
+        self.file_label.pack(anchor="w", pady=(2, 0))
+
         # Table
-        table_frame = ttk.Frame(container)
-        table_frame.pack(fill="both", expand=True, pady=15)
+        self.tree = ttk.Treeview(
+            container,
+            columns=("Rank", "ID", "First Name", "Last Name"),
+            show="headings",
+            height=10
+        )
 
-        columns = ("Rank", "ID", "First Name", "Last Name")
-        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings")
-
-        for col in columns:
+        for col in ("Rank", "ID", "First Name", "Last Name"):
             self.tree.heading(col, text=col)
-            self.tree.column(col, anchor="center")
+            self.tree.column(col, anchor="center", width=150)
 
-        scrollbar = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
+        self.tree.pack(fill="both", expand=True, pady=15)
 
-        self.tree.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        # Bottom buttons (NEW)
+        bottom_buttons = ttk.Frame(container)
+        bottom_buttons.pack(pady=5)
+
+        ttk.Button(bottom_buttons, text="🧹 Clear Results", command=self.clear_results).grid(row=0, column=0, padx=8)
+        ttk.Button(bottom_buttons, text="⬇ Export CSV", command=self.export_csv).grid(row=0, column=1, padx=8)
 
     # ---------- LOGIC ----------
     def load_csv(self):
@@ -161,7 +224,10 @@ class SortingBenchmarkGUI:
                     Record(int(r["ID"]), r["FirstName"], r["LastName"])
                     for r in reader
                 ]
-            messagebox.showinfo("Loaded", f"{len(self.data):,} records loaded.")
+            import os
+            self.loaded_file = os.path.basename(path)
+            self.file_label.config(text=f"Loaded file: {self.loaded_file}")
+            messagebox.showinfo("Loaded", f"{len(self.data):,} records loaded from:\n{self.loaded_file}")
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -173,9 +239,12 @@ class SortingBenchmarkGUI:
         }[self.col_var.get()]
 
     def update_progress(self, current, total):
+        elapsed = time.time() - self.start_time
         percent = (current / total) * 100
         self.progress["value"] = percent
-        self.status.config(text=f"Processing... {percent:.1f}%")
+        self.status.config(
+            text=f"Processing... {percent:.1f}% | Elapsed: {elapsed:.2f}s"
+        )
         self.root.update_idletasks()
 
     def start_sort(self):
@@ -183,15 +252,30 @@ class SortingBenchmarkGUI:
             messagebox.showwarning("No Data", "Load a CSV file first.")
             return
 
-        self.tree.delete(*self.tree.get_children())
-        self.progress["value"] = 0
+        self.clear_results()
+        self.stop_event.clear()
+        self.pause_event.set()
+
+        self.start_time = time.time()
+        self.end_time = None
 
         threading.Thread(target=self.run_sort, daemon=True).start()
+
+    def pause_sort(self):
+        if self.pause_event.is_set():
+            self.pause_event.clear()
+            self.status.config(text="Paused (time preserved)")
+        else:
+            self.pause_event.set()
+
+    def stop_sort(self):
+        self.stop_event.set()
+        self.pause_event.set()
+        self.status.config(text="Stopped")
 
     def run_sort(self):
         n = min(int(self.rows_var.get()), len(self.data))
         subset = self.data[:n]
-        key = self.key_func()
 
         algo_map = {
             "Bubble Sort": SortingAlgorithms.bubble_sort,
@@ -199,26 +283,75 @@ class SortingBenchmarkGUI:
             "Merge Sort": SortingAlgorithms.merge_sort
         }
 
-        algo_name = self.algo_var.get()
-        algo_func = algo_map[algo_name]
+        self.sorted_result = algo_map[self.algo_var.get()](
+            subset,
+            self.key_func(),
+            self.update_progress,
+            self.pause_event,
+            self.stop_event
+        )
 
-        self.status.config(text=f"Running {algo_name}...")
-        start = time.time()
-        result = algo_func(subset, key, self.update_progress)
-        elapsed = time.time() - start
+        if self.sorted_result is None:
+            return
 
-        for i, r in enumerate(result[:10], start=1):
+        self.end_time = time.time()
+        total_time = self.end_time - self.start_time
+
+        for i, r in enumerate(self.sorted_result[:10], 1):
             self.tree.insert("", "end", values=(i, r.id, r.first_name, r.last_name))
 
-        self.status.config(text=f"{algo_name} completed in {elapsed:.4f} seconds")
+        self.status.config(text=f"Completed | Total Time: {total_time:.4f}s")
 
-        # ✅ POP-UP MESSAGE WHEN DONE
-        self.root.after(0, lambda: messagebox.showinfo(
+        messagebox.showinfo(
             "Sorting Complete",
-            f"{algo_name} has finished sorting.\n\n"
+            f"{self.algo_var.get()} completed.\n\n"
             f"Records processed: {n:,}\n"
-            f"Time elapsed: {elapsed:.4f} seconds"
-        ))
+            f"Total execution time: {total_time:.4f} seconds"
+        )
+
+    # ---------- CLEAR ----------
+    def clear_results(self):
+        self.tree.delete(*self.tree.get_children())
+        self.progress["value"] = 0
+        self.status.config(text="Ready")
+        self.sorted_result.clear()
+
+    # ---------- EXPORT ----------
+    def export_csv(self):
+        if not self.sorted_result:
+            messagebox.showwarning("No Data", "Nothing to export yet.")
+            return
+
+        path = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV Files", "*.csv")]
+        )
+        if not path:
+            return
+
+        total_time = self.end_time - self.start_time
+
+        try:
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    "Rank", "ID", "First Name", "Last Name",
+                    "Algorithm", "Sorted Column",
+                    "Records Processed", "Execution Time (seconds)"
+                ])
+
+                for i, r in enumerate(self.sorted_result, 1):
+                    writer.writerow([
+                        i, r.id, r.first_name, r.last_name,
+                        self.algo_var.get(),
+                        self.col_var.get(),
+                        len(self.sorted_result),
+                        f"{total_time:.4f}"
+                    ])
+
+            messagebox.showinfo("Exported", "Results exported successfully.")
+        except Exception as e:
+            messagebox.showerror("Export Error", str(e))
 
 
 # ===================== RUN =====================

@@ -205,7 +205,7 @@ class SortingBenchmarkGUI:
 
         self.tree.pack(fill="both", expand=True, pady=15)
 
-        # Bottom buttons (NEW)
+        # Bottom buttons
         bottom_buttons = ttk.Frame(container)
         bottom_buttons.pack(pady=5)
 
@@ -292,6 +292,7 @@ class SortingBenchmarkGUI:
         )
 
         if self.sorted_result is None:
+            self.sorted_result = []  # Reset to empty list instead of leaving as None
             return
 
         self.end_time = time.time()
@@ -314,7 +315,9 @@ class SortingBenchmarkGUI:
         self.tree.delete(*self.tree.get_children())
         self.progress["value"] = 0
         self.status.config(text="Ready")
-        self.sorted_result.clear()
+        # Fix: Check if sorted_result is not None before clearing
+        if self.sorted_result is not None:
+            self.sorted_result.clear()
 
     # ---------- EXPORT ----------
     def export_csv(self):
@@ -329,7 +332,7 @@ class SortingBenchmarkGUI:
         if not path:
             return
 
-        total_time = self.end_time - self.start_time
+        total_time = self.end_time - self.start_time if self.end_time else 0
 
         try:
             with open(path, "w", newline="", encoding="utf-8") as f:

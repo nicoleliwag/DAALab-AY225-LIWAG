@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pro PathFinder | Logic Breakdown</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap');
+
+  :root {
+    --bg: #050d1a;
+    --panel: #0a1628;
+    --border: #1a3a5c;
+    --accent: #00c8ff;
+    --accent2: #00ff9d;
+    --accent3: #ff6b35;
+    --text: #c8e6ff;
+    --muted: #4a7098;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  header {
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(0,200,255,0.05), transparent);
+  }
+
+  header h1 {
+    font-family: 'Rajdhani', sans-serif;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text; 
+    -webkit-text-fill-color: transparent;
+  }
+
+  .main { 
+    display: grid; 
+    grid-template-columns: 320px 1fr; 
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .sidebar, .content { display: flex; flex-direction: column; gap: 20px; }
+
+  .card {
+    background: rgba(10,22,40,0.9);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .section-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 15px; border-bottom: 1px solid var(--border);
+    padding-bottom: 5px;
+  }
+
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+  }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  select {
+    width: 100%;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px;
+    font-family: 'Share Tech Mono';
+    margin-bottom: 10px;
+  }
+
+  .btn {
+    width: 100%; padding: 12px;
+    border: none; border-radius: 8px;
+    color: #000; font-family: 'Rajdhani', sans-serif;
+    font-weight: 700; letter-spacing: 1px;
+    cursor: pointer; transition: 0.2s;
+    margin-bottom: 10px;
+  }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #0099cc); }
+  .btn-outline { background: transparent; border: 1px solid var(--accent2); color: var(--accent2); }
+  .btn-toggle { background: #1a3a5c; color: var(--accent); margin-top: 10px; font-size: 11px; }
+  .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+  .summary-container { display: none; flex-direction: column; gap: 12px; }
+  .summary-container.visible { display: flex; }
+
+  .summary-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .summary-card:hover { background: rgba(255, 255, 255, 0.08); }
+  .summary-card.active-dist { border-color: var(--accent); background: rgba(0, 200, 255, 0.1); }
+  .summary-card.active-time { border-color: var(--accent2); background: rgba(0, 255, 157, 0.1); }
+  .summary-card.active-fuel { border-color: var(--accent3); background: rgba(255, 107, 53, 0.1); }
+
+  #solutionPanel {
+    display: none;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  #solutionPanel.show { display: block; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-family: 'Share Tech Mono'; font-size: 12px; }
+  th { text-align: left; color: var(--muted); padding: 8px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+  td { padding: 8px; border-bottom: 1px solid rgba(26, 58, 92, 0.3); }
+  .highlight-val { color: var(--accent2); font-weight: bold; }
+
+  .metric-info { display: flex; flex-direction: column; }
+  .metric-total { font-family: 'Share Tech Mono'; font-size: 24px; color: #fff; }
+  .metric-path { font-family: 'Share Tech Mono'; font-size: 11px; color: var(--accent); margin-top: 4px; word-break: break-all;}
+  
+  #graphCanvas { width: 100%; height: 450px; background: rgba(0,0,0,0.2); border-radius: 10px; }
+
+  .mode-toggle {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: 8px;
+    font-size: 10px;
+    background: #1a3a5c;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .mode-btn.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PathFinder <span style="font-size: 12px; color: var(--muted); font-weight: normal;">| Logical Decomposition</span></h1>
+</header>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="card">
+      <div class="section-label">1. Data Source</div>
+      <div class="upload-zone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+        <p id="fileName">Select Data File</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">2. Logic Mode</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeTour" onclick="setMode('tour')">Full Tour (TSP)</button>
+        <button class="mode-btn" id="modeEfficiency" onclick="setMode('efficiency')">Efficiency (Star)</button>
+      </div>
+      <div class="section-label">3. Process Controls</div>
+      <select id="srcNode"><option value="">— Select Start —</option></select>
+      <button class="btn btn-primary" onclick="calculateAllNodeTour()">⚡ Run Optimizer</button>
+      <button class="btn btn-outline" onclick="findAbsoluteBestStart()">🔍 Find Global Best</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="card">
+      <div class="section-label" id="vizLabel">Network Tour Visualization</div>
+      <canvas id="graphCanvas"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Optimization Results</div>
+      <div id="resultsArea" class="summary-container">
+        <div class="summary-card" id="card-dist" onclick="togglePath('distance')">
+          <div class="metric-info">
+            <span class="metric-total" id="total-dist">0.0</span>
+            <span class="metric-path" id="path-dist">—</span>
+          </div>
+          <div style="text-align:right">
+            <span class="tag tag-dist" style="color:var(--accent)">Distance</span>
+            <div id="win-dist" style="font-size:9px; margin-top:5px; color:var(--muted)"></div>
+          </div>
+        </div>
+
+        <div class="summary-card" id="card-time" onclick="togglePath('time')">
+          <div class="metric-info">
+            <span class="metric-total" id="total-time">0.0</span>
+            <span class="metric-path" id="path-time">—</span>
+          </div>
+          <div style="text-align:right">
+            <span class="tag tag-time" style="color:var(--accent2)">Time</span>
+            <div id="win-time" style="font-size:9px; margin-top:5px; color:var(--muted)"></div>
+          </div>
+        </div>
+
+        <div class="summary-card" id="card-fuel" onclick="togglePath('fuel')">
+          <div class="metric-info">
+            <span class="metric-total" id="total-fuel">0.0</span>
+            <span class="metric-path" id="path-fuel">—</span>
+          </div>
+          <div style="text-align:right">
+            <span class="tag tag-fuel" style="color:var(--accent3)">Fuel</span>
+            <div id="win-fuel" style="font-size:9px; margin-top:5px; color:var(--muted)"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-toggle" onclick="toggleSolution()">📂 Show/Hide Solution Breakdown</button>
+
+        <div id="solutionPanel">
+          <div class="section-label">Calculation Trace: <span id="currentMetricLabel" style="color:#fff"></span></div>
+          <table id="solutionTable">
+            <thead>
+              <tr>
+                <th>Segment</th>
+                <th>Route</th>
+                <th>Weight</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="solutionBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let edges = [];
+let nodes = [];
+let tourResults = {};
+let activeMetric = 'distance';
+let currentMode = 'tour'; // 'tour' or 'efficiency'
+
+function setMode(m) {
+  currentMode = m;
+  document.getElementById('modeTour').classList.toggle('active', m === 'tour');
+  document.getElementById('modeEfficiency').classList.toggle('active', m === 'efficiency');
+  document.getElementById('vizLabel').textContent = m === 'tour' ? "Network Tour Visualization" : "Efficiency Network (Star Sum)";
+}
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('fileName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    const wb = XLSX.read(evt.target.result, { type: 'array' });
+    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    processData(data);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function processData(rows) {
+  edges = rows.map(r => ({
+    from: String(r['Node Start'] || r['From'] || r['node start'] || '').trim(),
+    to: String(r['Node Destination'] || r['To'] || r['node destination'] || '').trim(),
+    distance: parseFloat(r['Distance'] || r['distance'] || 0),
+    time: parseFloat(r['Time'] || r['time'] || 0),
+    fuel: parseFloat(r['Fuel'] || r['fuel'] || 0)
+  })).filter(e => e.from && e.to);
+
+  const nodeSet = new Set();
+  edges.forEach(e => { nodeSet.add(e.from); nodeSet.add(e.to); });
+  nodes = [...nodeSet].sort();
+
+  const s = document.getElementById('srcNode');
+  s.innerHTML = '<option value="">— Select Start —</option>' + nodes.map(n => `<option value="${n}">${n}</option>`).join('');
+  drawGraph();
+}
+
+function getEdge(from, to) {
+  return edges.find(e => e.from === from && e.to === to) || null;
+}
+
+// Dijkstra for Efficiency Logic (Star Sum)
+function solveEfficiency(startNode, metric) {
+  let distances = {};
+  let prev = {};
+  nodes.forEach(n => { distances[n] = Infinity; });
+  distances[startNode] = 0;
+
+  let unvisited = new Set(nodes);
+
+  while (unvisited.size > 0) {
+    let curr = null;
+    unvisited.forEach(n => {
+      if (curr === null || distances[n] < distances[curr]) curr = n;
+    });
+
+    if (distances[curr] === Infinity) break;
+    unvisited.delete(curr);
+
+    edges.filter(e => e.from === curr).forEach(edge => {
+      let alt = distances[curr] + edge[metric];
+      if (alt < distances[edge.to]) {
+        distances[edge.to] = alt;
+        prev[edge.to] = { from: curr, weight: edge[metric], edge: edge };
+      }
+    });
+  }
+
+  let totalSum = 0;
+  let allEdges = [];
+  nodes.forEach(n => {
+    if (n !== startNode && distances[n] !== Infinity) {
+      totalSum += distances[n];
+      // Backtrack to get edges for visualization
+      let temp = n;
+      while (prev[temp]) {
+        allEdges.push(prev[temp].edge);
+        temp = prev[temp].from;
+      }
+    }
+  });
+
+  return {
+    total: parseFloat(totalSum.toFixed(2)),
+    path: [`Star from ${startNode}`],
+    edges: allEdges,
+    start: startNode,
+    isStar: true,
+    nodeDistances: distances
+  };
+}
+
+function solveFullTour(startNode, metric) {
+  if (currentMode === 'efficiency') return solveEfficiency(startNode, metric);
+
+  const others = nodes.filter(n => n !== startNode);
+  let bestTour = null;
+  let minCost = Infinity;
+
+  function permutations(arr) {
+    if (arr.length <= 1) return [arr];
+    const result = [];
+    for (let i = 0; i < arr.length; i++) {
+      const rest = arr.slice(0, i).concat(arr.slice(i + 1));
+      for (const perm of permutations(rest)) {
+        result.push([arr[i], ...perm]);
+      }
+    }
+    return result;
+  }
+
+  const allPerms = permutations(others);
+
+  for (const perm of allPerms) {
+    const tour = [startNode, ...perm, startNode];
+    let total = 0;
+    let tourEdges = [];
+    let valid = true;
+
+    for (let i = 0; i < tour.length - 1; i++) {
+      const edge = getEdge(tour[i], tour[i + 1]);
+      if (!edge) { valid = false; break; }
+      total += edge[metric];
+      tourEdges.push(edge);
+    }
+
+    if (valid && total < minCost) {
+      minCost = total;
+      bestTour = {
+        path: tour,
+        edges: tourEdges,
+        total: parseFloat(total.toFixed(2)),
+        start: startNode
+      };
+    }
+  }
+  return bestTour;
+}
+
+function calculateAllNodeTour() {
+  const start = document.getElementById('srcNode').value;
+  if (!start) return alert("Select a start node");
+  ['distance', 'time', 'fuel'].forEach(m => {
+    tourResults[m] = solveFullTour(start, m);
+  });
+  updateUI();
+}
+
+function findAbsoluteBestStart() {
+  ['distance', 'time', 'fuel'].forEach(m => {
+    let absoluteBest = null;
+    nodes.forEach(startNode => {
+      const res = solveFullTour(startNode, m);
+      if (res && (absoluteBest === null || res.total < absoluteBest.total)) {
+        absoluteBest = res;
+      }
+    });
+    tourResults[m] = absoluteBest;
+  });
+  updateUI();
+}
+
+function updateUI() {
+  document.getElementById('resultsArea').classList.add('visible');
+  const labels = { distance: '', time: ' min', fuel: ' L' };
+
+  ['distance', 'time', 'fuel'].forEach(m => {
+    const res = tourResults[m];
+    const id = m === 'distance' ? 'dist' : m;
+    const decimals = m === 'fuel' ? 1 : 1;
+    document.getElementById(`total-${id}`).textContent = res ? res.total.toFixed(decimals) + labels[m] : "N/A";
+    document.getElementById(`path-${id}`).textContent = res ? (res.isStar ? `Efficiency Sum from ${res.start}` : res.path.join(" → ")) : "Path not found";
+    document.getElementById(`win-${id}`).textContent = res ? `Best Start: Node ${res.start}` : "";
+  });
+
+  togglePath(activeMetric);
+}
+
+function toggleSolution() {
+  document.getElementById('solutionPanel').classList.toggle('show');
+}
+
+function togglePath(metric) {
+  activeMetric = metric;
+  document.querySelectorAll('.summary-card').forEach(c => c.classList.remove('active-dist', 'active-time', 'active-fuel'));
+  const id = metric === 'distance' ? 'dist' : metric;
+  document.getElementById(`card-${id}`).classList.add(`active-${id}`);
+
+  document.getElementById('currentMetricLabel').textContent = metric.toUpperCase() + (currentMode === 'efficiency' ? ' (STAR SUM)' : ' (TOUR)');
+  const body = document.getElementById('solutionBody');
+  body.innerHTML = "";
+
+  if (tourResults[metric]) {
+    const res = tourResults[metric];
+    const unit = metric === 'time' ? ' min' : (metric === 'fuel' ? ' L' : '');
+    
+    if (res.isStar) {
+        nodes.forEach(n => {
+            if(n !== res.start) {
+                body.innerHTML += `<tr>
+                    <td>To Node ${n}</td>
+                    <td>${res.start} ⇢ ${n}</td>
+                    <td>${res.nodeDistances[n]}${unit}</td>
+                    <td class="highlight-val">—</td>
+                </tr>`;
+            }
+        });
+    } else {
+        let cumulative = 0;
+        res.edges.forEach((edge, i) => {
+            cumulative += edge[metric];
+            body.innerHTML += `<tr>
+                <td>Step ${i + 1}</td>
+                <td>${edge.from} → ${edge.to}</td>
+                <td>${edge[metric]}${unit}</td>
+                <td class="highlight-val">${cumulative.toFixed(1)}${unit}</td>
+            </tr>`;
+        });
+    }
+  }
+
+  drawGraph(tourResults[metric]);
+}
+
+function drawGraph(highlightObj = null) {
+  const canvas = document.getElementById('graphCanvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 450;
+
+  const pos = {};
+  nodes.forEach((n, i) => {
+    const ang = (i / nodes.length) * Math.PI * 2 - Math.PI / 2;
+    pos[n] = {
+      x: canvas.width / 2 + 160 * Math.cos(ang),
+      y: 225 + 160 * Math.sin(ang)
+    };
+  });
+
+  edges.forEach(e => {
+    if (!pos[e.from] || !pos[e.to]) return;
+    ctx.beginPath();
+    ctx.moveTo(pos[e.from].x, pos[e.from].y);
+    ctx.lineTo(pos[e.to].x, pos[e.to].y);
+    ctx.strokeStyle = '#1a3a5c';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.stroke();
+  });
+
+  if (highlightObj && highlightObj.edges) {
+    const colorMap = { distance: '#00c8ff', time: '#00ff9d', fuel: '#ff6b35' };
+    ctx.setLineDash([]);
+    ctx.strokeStyle = colorMap[activeMetric];
+    ctx.lineWidth = 3;
+
+    highlightObj.edges.forEach((e, idx) => {
+      const x1 = pos[e.from].x, y1 = pos[e.from].y;
+      const x2 = pos[e.to].x, y2 = pos[e.to].y;
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const endX = x2 - 20 * Math.cos(angle);
+      const endY = y2 - 20 * Math.sin(angle);
+
+      ctx.beginPath();
+      ctx.moveTo(x1 + 20 * Math.cos(angle), y1 + 20 * Math.sin(angle));
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+
+      const arrowLen = 10;
+      ctx.beginPath();
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX - arrowLen * Math.cos(angle - 0.4), endY - arrowLen * Math.sin(angle - 0.4));
+      ctx.lineTo(endX - arrowLen * Math.cos(angle + 0.4), endY - arrowLen * Math.sin(angle + 0.4));
+      ctx.fillStyle = colorMap[activeMetric];
+      ctx.fill();
+    });
+  }
+
+  nodes.forEach(n => {
+    const isStart = highlightObj && highlightObj.start === n;
+    ctx.beginPath();
+    ctx.arc(pos[n].x, pos[n].y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = isStart ? '#ffffff' : '#050d1a';
+    ctx.fill();
+    ctx.strokeStyle = isStart ? '#ffffff' : '#1a3a5c';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]);
+    ctx.stroke();
+    ctx.fillStyle = isStart ? '#000' : '#fff';
+    ctx.font = "bold 13px 'Rajdhani'";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(n, pos[n].x, pos[n].y);
+  });
+}
+</script>
+</body>
+</html>

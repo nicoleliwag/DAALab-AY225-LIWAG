@@ -395,6 +395,170 @@
   .ds-inspector pre .num   { color: #ff9f5a; }
   .ds-inspector pre .arr   { color: var(--muted); }
 
+  /* ─── APPLY FILTER SORT PANEL ─── */
+  #afs-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 40px;
+    animation: fadeUp .4s ease .35s both;
+    overflow: hidden;
+  }
+
+  .afs-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .afs-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .afs-name-input {
+    flex: 1;
+    min-width: 160px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .afs-name-input:focus { border-color: var(--accent); }
+  .afs-name-input::placeholder { color: var(--muted); }
+
+  .afs-mode-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .afs-mode-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .afs-mode-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .afs-mode-btn.active { background: rgba(232,255,71,.1); border-color: var(--accent); color: var(--accent); }
+
+  .afs-sort-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .afs-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .afs-select:focus { border-color: var(--accent); }
+
+  .afs-dir-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all .15s;
+    min-width: 64px;
+    text-align: center;
+  }
+  .afs-dir-btn:hover,
+  .afs-dir-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(71,200,255,.08); }
+
+  .afs-apply-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  .afs-apply-btn:hover { opacity: .85; }
+
+  .afs-clear-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .afs-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  .afs-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    flex-wrap: wrap;
+  }
+
+  .afs-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(71,200,255,.1);
+    border: 1px solid rgba(71,200,255,.25);
+    color: var(--accent2);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  .afs-chip.filter-chip { background: rgba(232,255,71,.08); border-color: rgba(232,255,71,.2); color: var(--accent); }
+  .afs-chip.sort-chip   { background: rgba(71,200,255,.08); border-color: rgba(71,200,255,.2); color: var(--accent2); }
+  .afs-chip.result-chip { background: rgba(255,255,255,.04); border-color: var(--border); color: var(--text-dim); }
+
+  .afs-chip-x {
+    cursor: pointer;
+    opacity: .6;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .afs-chip-x:hover { opacity: 1; }
+
   /* ─── RENDER TABLE ─── */
   .rt-toolbar {
     display: flex;
@@ -680,6 +844,15 @@
         </table>
       </div>
 
+      <!-- FILTER + SORT PANEL -->
+      <div class="section-header">
+        <h3>applyFilterSort</h3>
+        <span class="pill">filter by name · sort by column</span>
+      </div>
+      <div id="afs-panel">
+        <!-- populated by applyFilterSort() after load -->
+      </div>
+
       <!-- PREVIEW -->
       <div class="section-header">
         <h3>Data preview</h3>
@@ -963,7 +1136,10 @@ function renderDashboard(filename) {
   document.getElementById('ds-pre').innerHTML = renderDSInspector(DS);
 
   /* renderTable — full interactive data table */
-  window.RT = renderTable(DS.rows, { pageSize: 25 });
+  window.RT  = renderTable(DS.rows, { pageSize: 25 });
+
+  /* applyFilterSort — filter by name, sort by column */
+  window.AFS = applyFilterSort(DS);
 
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('upload-zone').style.display = 'none';
@@ -1000,6 +1176,247 @@ ${statSample},
     …
   },
 }`;
+}
+
+/* ── applyFilterSort ──────────────────────────── */
+/**
+ * applyFilterSort(ds, options?) — filter rows by a name field and
+ * sort by any column, then push the result back into the live table.
+ *
+ * @param {object}   ds              - A window.DS-shaped dataset object
+ * @param {object}   [options]
+ *   @param {string}   [options.nameCol]    - Which column is the "name" field
+ *                                           (auto-detected if omitted)
+ *   @param {string}   [options.filterVal]  - Initial filter string
+ *   @param {string}   [options.sortCol]    - Initial sort column
+ *   @param {'asc'|'desc'} [options.sortDir] - Initial sort direction (default 'asc')
+ *   @param {'contains'|'starts'|'exact'} [options.mode] - Match mode (default 'contains')
+ *
+ * Renders a control panel into #afs-panel.
+ * Calls window.RT.applyFilterSort(filtered, sortCol, sortDir) to
+ * update the live renderTable instance.
+ *
+ * Returns a controller:
+ *   { getState(), apply(filterVal, sortCol, sortDir, mode), clear() }
+ */
+function applyFilterSort(ds, options = {}) {
+  if (!ds || !ds.rows || !ds.rows.length) return;
+
+  const panel = document.getElementById('afs-panel');
+  if (!panel) return;
+
+  /* ── auto-detect the "name" column ── */
+  const NAME_HINTS = ['name', 'country', 'title', 'label', 'series', 'description', 'desc', 'id'];
+  const autoNameCol = (() => {
+    if (options.nameCol) return options.nameCol;
+    const lower = ds.headers.map(h => ({ h, l: h.toLowerCase() }));
+    for (const hint of NAME_HINTS) {
+      const match = lower.find(({ l }) => l.includes(hint));
+      if (match) return match.h;
+    }
+    return ds.headers[0];
+  })();
+
+  /* ── state ── */
+  let nameCol   = autoNameCol;
+  let filterVal = options.filterVal || '';
+  let sortCol   = options.sortCol   || null;
+  let sortDir   = options.sortDir   || 'asc';
+  let mode      = options.mode      || 'contains';   // 'contains' | 'starts' | 'exact'
+  let lastResult = ds.rows;
+
+  /* ── build unique name col options ── */
+  const stringCols = ds.columns
+    .filter(c => c.type === 'string')
+    .map(c => c.name);
+
+  const numericCols = ds.columns
+    .filter(c => c.type === 'numeric')
+    .map(c => c.name);
+
+  /* ── render panel scaffold ── */
+  panel.innerHTML = `
+    <div class="afs-top">
+      <span class="afs-label">Filter by</span>
+      <select class="afs-select" id="afs-name-col">
+        ${ds.headers.map(h => `<option value="${esc(h)}" ${h === nameCol ? 'selected' : ''}>${esc(h)}</option>`).join('')}
+      </select>
+      <input class="afs-name-input" id="afs-filter-input"
+             type="text" placeholder="e.g. Afghanistan, GDP…"
+             value="${esc(filterVal)}" />
+      <div class="afs-mode-group">
+        ${['contains','starts','exact'].map(m =>
+          `<button class="afs-mode-btn${mode === m ? ' active' : ''}" data-mode="${m}">${
+            m === 'contains' ? '⊃ contains' : m === 'starts' ? '⌖ starts' : '= exact'
+          }</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="afs-sort-row">
+      <span class="afs-label">Sort by</span>
+      <select class="afs-select" id="afs-sort-col">
+        <option value="">— none —</option>
+        ${ds.headers.map(h => `<option value="${esc(h)}" ${h === sortCol ? 'selected' : ''}>${esc(h)}</option>`).join('')}
+      </select>
+      <button class="afs-dir-btn${sortDir === 'asc' ? ' active' : ''}" id="afs-dir-asc">▲ ASC</button>
+      <button class="afs-dir-btn${sortDir === 'desc' ? ' active' : ''}" id="afs-dir-desc">▼ DESC</button>
+      <button class="afs-apply-btn" id="afs-apply-btn">Apply →</button>
+      <button class="afs-clear-btn" id="afs-clear-btn">✕ Clear</button>
+    </div>
+    <div class="afs-status-bar" id="afs-status"></div>
+  `;
+
+  /* ── wire controls ── */
+  const nameColSel  = panel.querySelector('#afs-name-col');
+  const filterInput = panel.querySelector('#afs-filter-input');
+  const sortColSel  = panel.querySelector('#afs-sort-col');
+  const dirAsc      = panel.querySelector('#afs-dir-asc');
+  const dirDesc     = panel.querySelector('#afs-dir-desc');
+  const applyBtn    = panel.querySelector('#afs-apply-btn');
+  const clearBtn    = panel.querySelector('#afs-clear-btn');
+
+  nameColSel.addEventListener('change', e => { nameCol = e.target.value; });
+  sortColSel.addEventListener('change', e => { sortCol = e.target.value || null; });
+
+  dirAsc.addEventListener('click', () => {
+    sortDir = 'asc';
+    dirAsc.classList.add('active'); dirDesc.classList.remove('active');
+  });
+  dirDesc.addEventListener('click', () => {
+    sortDir = 'desc';
+    dirDesc.classList.add('active'); dirAsc.classList.remove('active');
+  });
+
+  panel.querySelectorAll('.afs-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      mode = btn.dataset.mode;
+      panel.querySelectorAll('.afs-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  /* live-filter as user types (debounced 120 ms) */
+  let debounceTimer;
+  filterInput.addEventListener('input', e => {
+    filterVal = e.target.value;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runApply, 120);
+  });
+
+  applyBtn.addEventListener('click', runApply);
+  clearBtn.addEventListener('click', runClear);
+
+  /* also allow Enter key */
+  filterInput.addEventListener('keydown', e => { if (e.key === 'Enter') runApply(); });
+
+  /* ── core: filter + sort pipeline ── */
+  function matchRow(row) {
+    if (!filterVal.trim()) return true;
+    const cell = row[nameCol];
+    if (cell === null || cell === undefined) return false;
+    const haystack = String(cell).toLowerCase();
+    const needle   = filterVal.trim().toLowerCase();
+    if (mode === 'exact')   return haystack === needle;
+    if (mode === 'starts')  return haystack.startsWith(needle);
+    return haystack.includes(needle);               // 'contains' (default)
+  }
+
+  function sortRows(rows) {
+    if (!sortCol) return rows;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      if (av === null || av === undefined) return 1;
+      if (bv === null || bv === undefined) return -1;
+      if (typeof av === 'number' && typeof bv === 'number') return dir * (av - bv);
+      return dir * String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }
+
+  function runApply() {
+    filterVal = filterInput.value;
+    sortCol   = sortColSel.value || null;
+
+    const filtered = ds.rows.filter(matchRow);
+    const sorted   = sortRows(filtered);
+    lastResult     = sorted;
+
+    /* push into renderTable if controller is live */
+    if (window.RT && typeof window.RT.applyFilterSort === 'function') {
+      window.RT.applyFilterSort(sorted, sortCol, sortDir);
+    }
+
+    renderStatus(filtered.length, sorted.length);
+    scrollToTable();
+  }
+
+  function runClear() {
+    filterVal = '';  sortCol = null;  sortDir = 'asc';  mode = 'contains';
+    filterInput.value = '';
+    sortColSel.value  = '';
+    nameColSel.value  = nameCol;
+    dirAsc.classList.add('active'); dirDesc.classList.remove('active');
+    panel.querySelectorAll('.afs-mode-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+    lastResult = ds.rows;
+
+    if (window.RT && typeof window.RT.applyFilterSort === 'function') {
+      window.RT.applyFilterSort(ds.rows, null, 'asc');
+    }
+    renderStatus(ds.rows.length, ds.rows.length, true);
+  }
+
+  function renderStatus(filteredCount, sortedCount, cleared = false) {
+    const statusBar = panel.querySelector('#afs-status');
+    if (cleared) { statusBar.innerHTML = ''; return; }
+
+    const chips = [];
+    if (filterVal.trim()) {
+      chips.push(`<span class="afs-chip filter-chip">
+        ⊃ <strong>${esc(nameCol)}</strong> ${mode} "${esc(filterVal)}"
+        <span class="afs-chip-x" id="afs-clear-filter">×</span>
+      </span>`);
+    }
+    if (sortCol) {
+      chips.push(`<span class="afs-chip sort-chip">
+        ${sortDir === 'asc' ? '▲' : '▼'} sorted by <strong>${esc(sortCol)}</strong>
+        <span class="afs-chip-x" id="afs-clear-sort">×</span>
+      </span>`);
+    }
+    chips.push(`<span class="afs-chip result-chip">
+      ${filteredCount.toLocaleString()} / ${ds.rows.length.toLocaleString()} rows
+    </span>`);
+
+    statusBar.innerHTML = chips.join('');
+
+    statusBar.querySelector('#afs-clear-filter')?.addEventListener('click', () => {
+      filterInput.value = ''; filterVal = ''; runApply();
+    });
+    statusBar.querySelector('#afs-clear-sort')?.addEventListener('click', () => {
+      sortColSel.value = ''; sortCol = null; runApply();
+    });
+  }
+
+  function scrollToTable() {
+    const rtSection = document.getElementById('rt-container');
+    if (rtSection) rtSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ── initial apply if options provided ── */
+  if (filterVal || sortCol) runApply();
+
+  /* ── return controller ── */
+  return {
+    getState : () => ({ nameCol, filterVal, sortCol, sortDir, mode, resultCount: lastResult.length }),
+    apply    : (fv, sc, sd, m) => {
+      if (fv !== undefined) { filterVal = fv; filterInput.value = fv; }
+      if (sc !== undefined) { sortCol   = sc; sortColSel.value  = sc || ''; }
+      if (sd !== undefined) { sortDir   = sd; dirAsc.classList.toggle('active', sd === 'asc'); dirDesc.classList.toggle('active', sd === 'desc'); }
+      if (m  !== undefined) { mode      = m;  panel.querySelectorAll('.afs-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m)); }
+      runApply();
+    },
+    clear : runClear,
+    getResult: () => lastResult,
+  };
 }
 
 /* ── renderTable ──────────────────────────────── */
@@ -1041,6 +1458,7 @@ function renderTable(data, options = {}) {
   let sortCol     = options.sortCol  || null;
   let sortDir     = options.sortDir  || 'asc';
   let searchTerm  = '';
+  let externalData = null;  // set by applyFilterSort() to override internal filter
 
   /* ── build scaffold ── */
   mount.innerHTML = `
@@ -1101,6 +1519,16 @@ function renderTable(data, options = {}) {
 
   /* ── core pipeline ── */
   function getFiltered() {
+    // If applyFilterSort() has pushed an external slice, use it directly
+    if (externalData !== null) {
+      if (!searchTerm) return externalData;
+      return externalData.filter(row =>
+        visibleCols.some(col => {
+          const v = row[col];
+          return v !== null && v !== undefined && String(v).toLowerCase().includes(searchTerm);
+        })
+      );
+    }
     if (!searchTerm) return data;
     return data.filter(row =>
       visibleCols.some(col => {
@@ -1262,8 +1690,24 @@ function renderTable(data, options = {}) {
   /* ── initial draw ── */
   redraw();
 
+  /* ── expose applyFilterSort hook ──
+     Called by applyFilterSort() to push a pre-filtered+sorted
+     slice into this table instance, overriding the internal pipeline.  */
+  function applyExternal(rows, newSortCol, newSortDir) {
+    externalData = rows;
+    if (newSortCol !== undefined) sortCol = newSortCol;
+    if (newSortDir !== undefined) sortDir = newSortDir;
+    currentPage = 1;
+    redraw();
+  }
+
   /* ── return controller ── (callable from console) */
-  return { redraw, getState: () => ({ sortCol, sortDir, searchTerm, currentPage, pageSize, visibleCols }) };
+  return {
+    redraw,
+    applyFilterSort : applyExternal,
+    resetData       : () => { externalData = null; currentPage = 1; redraw(); },
+    getState        : () => ({ sortCol, sortDir, searchTerm, currentPage, pageSize, visibleCols, isFiltered: externalData !== null }),
+  };
 }
 
 /* ── UI helpers ───────────────────────────────── */
@@ -1314,5 +1758,5 @@ function handleFileSelect(input) {
   if (file) loadDataset(file);
 }
 </script>
-</body>
+</body> 
 </html>

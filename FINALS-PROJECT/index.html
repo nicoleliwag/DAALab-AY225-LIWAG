@@ -395,6 +395,199 @@
   .ds-inspector pre .num   { color: #ff9f5a; }
   .ds-inspector pre .arr   { color: var(--muted); }
 
+  /* ─── RENDER TABLE ─── */
+  .rt-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .rt-search {
+    flex: 1;
+    min-width: 180px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 12px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .rt-search:focus { border-color: var(--accent); }
+  .rt-search::placeholder { color: var(--muted); }
+
+  .rt-col-toggle-wrap { position: relative; }
+
+  .rt-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    white-space: nowrap;
+  }
+  .rt-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .rt-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(232,255,71,.07); }
+
+  .rt-col-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 0;
+    z-index: 100;
+    min-width: 200px;
+    max-height: 260px;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  .rt-col-dropdown.open { display: block; }
+
+  .rt-col-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+    transition: background .1s;
+  }
+  .rt-col-item:hover { background: rgba(255,255,255,.03); color: var(--text); }
+  .rt-col-item input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+
+  .rt-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .rt-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    animation: fadeUp .4s ease .5s both;
+  }
+
+  .rt-table {
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 100%;
+    min-width: 400px;
+  }
+
+  .rt-table th {
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .9px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .rt-table th:hover { color: var(--text); }
+
+  .rt-th-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .rt-sort-icon {
+    font-size: 9px;
+    opacity: .35;
+    transition: opacity .15s;
+  }
+  .rt-table th:hover .rt-sort-icon { opacity: .7; }
+  .rt-table th.sort-asc  .rt-sort-icon,
+  .rt-table th.sort-desc .rt-sort-icon { opacity: 1; color: var(--accent); }
+
+  .rt-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rt-table tr:last-child td { border-bottom: none; }
+  .rt-table tbody tr:hover td { background: rgba(255,255,255,.025); }
+
+  .rt-table td.cell-num { color: var(--accent2); text-align: right; }
+  .rt-table th.col-num  { text-align: right; }
+  .rt-table td.cell-null { color: var(--muted); font-style: italic; }
+
+  .rt-highlight { background: rgba(232,255,71,.18); border-radius: 2px; }
+
+  .rt-pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .rt-page-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    min-width: 32px;
+    text-align: center;
+  }
+  .rt-page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .rt-page-btn.current { background: rgba(232,255,71,.12); border-color: var(--accent); color: var(--accent); }
+  .rt-page-btn:disabled { opacity: .3; cursor: default; }
+
+  .rt-page-info {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  .rt-page-size {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 8px;
+    cursor: pointer;
+    outline: none;
+  }
+  .rt-page-size:focus { border-color: var(--accent); }
+
   /* ─── UTILS ─── */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
@@ -522,6 +715,13 @@
           <tbody id="stats-tbody"></tbody>
         </table>
       </div>
+
+      <!-- RENDER TABLE -->
+      <div class="section-header" style="margin-top:40px">
+        <h3>renderTable</h3>
+        <span class="pill" id="rt-row-pill">—</span>
+      </div>
+      <div id="rt-container"></div>
 
       <!-- window.DS INSPECTOR -->
       <div class="section-header" style="margin-top:40px">
@@ -762,6 +962,9 @@ function renderDashboard(filename) {
   /* window.DS inspector */
   document.getElementById('ds-pre').innerHTML = renderDSInspector(DS);
 
+  /* renderTable — full interactive data table */
+  window.RT = renderTable(DS.rows, { pageSize: 25 });
+
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('upload-zone').style.display = 'none';
 }
@@ -797,6 +1000,270 @@ ${statSample},
     …
   },
 }`;
+}
+
+/* ── renderTable ──────────────────────────────── */
+/**
+ * renderTable(data, options?) — renders an interactive HTML table
+ * into #rt-container (or any container via options.target).
+ *
+ * @param {object[]} data       - Array of row objects (e.g. window.DS.rows)
+ * @param {object}   [options]
+ *   @param {string}   [options.target]    - CSS selector for mount element (default '#rt-container')
+ *   @param {string[]} [options.columns]   - Which columns to show (default: all)
+ *   @param {number}   [options.pageSize]  - Rows per page (default 25)
+ *   @param {string}   [options.sortCol]   - Initial sort column
+ *   @param {'asc'|'desc'} [options.sortDir] - Initial sort direction
+ *
+ * Features:
+ *  - Click column headers to sort (asc → desc → none)
+ *  - Global search across all visible columns
+ *  - Toggle column visibility
+ *  - Pagination with page-size selector
+ *  - Numeric cells right-aligned + coloured
+ *  - Null cells styled with italic placeholder
+ *  - Search term highlighting
+ */
+function renderTable(data, options = {}) {
+  if (!data || !data.length) return;
+
+  const mountSel  = options.target   || '#rt-container';
+  const mount     = document.querySelector(mountSel);
+  if (!mount) return;
+
+  const allCols   = Object.keys(data[0]);
+  const colTypes  = detectColTypes(allCols, data);
+
+  /* ── mutable state ── */
+  let visibleCols = options.columns  ? [...options.columns] : [...allCols];
+  let pageSize    = options.pageSize || 25;
+  let currentPage = 1;
+  let sortCol     = options.sortCol  || null;
+  let sortDir     = options.sortDir  || 'asc';
+  let searchTerm  = '';
+
+  /* ── build scaffold ── */
+  mount.innerHTML = `
+    <div class="rt-toolbar">
+      <input class="rt-search" id="rt-search-input" type="text" placeholder="Search all columns…" />
+      <div class="rt-col-toggle-wrap">
+        <button class="rt-btn" id="rt-col-btn">⊞ Columns</button>
+        <div class="rt-col-dropdown" id="rt-col-dropdown"></div>
+      </div>
+      <span class="rt-count" id="rt-match-count"></span>
+    </div>
+    <div class="rt-scroll">
+      <table class="rt-table" id="rt-main-table">
+        <thead id="rt-thead"></thead>
+        <tbody id="rt-tbody"></tbody>
+      </table>
+    </div>
+    <div class="rt-pagination" id="rt-pagination"></div>
+  `;
+
+  /* ── column toggle dropdown ── */
+  const dropdown = mount.querySelector('#rt-col-dropdown');
+  dropdown.innerHTML = allCols.map(col => `
+    <label class="rt-col-item">
+      <input type="checkbox" data-col="${esc(col)}" ${visibleCols.includes(col) ? 'checked' : ''} />
+      ${esc(col)}
+    </label>
+  `).join('');
+
+  dropdown.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      visibleCols = allCols.filter(c => {
+        const el = dropdown.querySelector(`input[data-col="${esc(c)}"]`);
+        return el && el.checked;
+      });
+      currentPage = 1;
+      redraw();
+    });
+  });
+
+  const colBtn = mount.querySelector('#rt-col-btn');
+  colBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+    colBtn.classList.toggle('active');
+  });
+  document.addEventListener('click', () => {
+    dropdown.classList.remove('open');
+    colBtn.classList.remove('active');
+  });
+
+  /* ── search ── */
+  mount.querySelector('#rt-search-input').addEventListener('input', e => {
+    searchTerm  = e.target.value.trim().toLowerCase();
+    currentPage = 1;
+    redraw();
+  });
+
+  /* ── core pipeline ── */
+  function getFiltered() {
+    if (!searchTerm) return data;
+    return data.filter(row =>
+      visibleCols.some(col => {
+        const v = row[col];
+        return v !== null && v !== undefined && String(v).toLowerCase().includes(searchTerm);
+      })
+    );
+  }
+
+  function getSorted(rows) {
+    if (!sortCol) return rows;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      if (av === null || av === undefined) return 1;
+      if (bv === null || bv === undefined) return -1;
+      if (typeof av === 'number' && typeof bv === 'number') return dir * (av - bv);
+      return dir * String(av).localeCompare(String(bv), undefined, { numeric: true });
+    });
+  }
+
+  function highlight(str) {
+    if (!searchTerm) return esc(str);
+    const escaped = esc(str);
+    const idx = escaped.toLowerCase().indexOf(searchTerm);
+    if (idx === -1) return escaped;
+    return (
+      escaped.slice(0, idx) +
+      `<mark class="rt-highlight">${escaped.slice(idx, idx + searchTerm.length)}</mark>` +
+      escaped.slice(idx + searchTerm.length)
+    );
+  }
+
+  function redraw() {
+    const filtered = getFiltered();
+    const sorted   = getSorted(filtered);
+    const total    = sorted.length;
+    const pages    = Math.max(1, Math.ceil(total / pageSize));
+    currentPage    = Math.min(currentPage, pages);
+
+    const start    = (currentPage - 1) * pageSize;
+    const pageRows = sorted.slice(start, start + pageSize);
+
+    /* update pill */
+    const pill = document.getElementById('rt-row-pill');
+    if (pill) pill.textContent = `${total.toLocaleString()} rows`;
+    mount.querySelector('#rt-match-count').textContent =
+      searchTerm ? `${total.toLocaleString()} match${total !== 1 ? 'es' : ''}` : `${data.length.toLocaleString()} rows`;
+
+    /* thead */
+    const thead = mount.querySelector('#rt-thead');
+    thead.innerHTML = '<tr>' + visibleCols.map(col => {
+      const isNum  = colTypes[col] === 'numeric';
+      const active = sortCol === col;
+      const icon   = active ? (sortDir === 'asc' ? '▲' : '▼') : '⇅';
+      const cls    = [isNum ? 'col-num' : '', active ? `sort-${sortDir}` : ''].filter(Boolean).join(' ');
+      return `<th class="${cls}" data-col="${esc(col)}">
+        <span class="rt-th-inner">${esc(col)} <span class="rt-sort-icon">${icon}</span></span>
+      </th>`;
+    }).join('') + '</tr>';
+
+    thead.querySelectorAll('th').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) {
+          if (sortDir === 'asc') sortDir = 'desc';
+          else { sortCol = null; sortDir = 'asc'; }
+        } else {
+          sortCol = col; sortDir = 'asc';
+        }
+        redraw();
+      });
+    });
+
+    /* tbody */
+    const tbody = mount.querySelector('#rt-tbody');
+    tbody.innerHTML = pageRows.map(row =>
+      '<tr>' + visibleCols.map(col => {
+        const v = row[col];
+        if (v === null || v === undefined || v === '') return `<td class="cell-null">—</td>`;
+        const isNum = colTypes[col] === 'numeric' && typeof v === 'number';
+        const cls   = isNum ? 'cell-num' : '';
+        const disp  = isNum ? fmtNum(v) : highlight(String(v));
+        return `<td class="${cls}">${disp}</td>`;
+      }).join('') + '</tr>'
+    ).join('');
+
+    /* pagination */
+    renderPagination(pages, total, start, pageRows.length);
+  }
+
+  function renderPagination(pages, total, start, count) {
+    const pag = mount.querySelector('#rt-pagination');
+
+    const pageButtons = [];
+    const addBtn = (label, page, isCurrent, disabled) => {
+      pageButtons.push(`<button class="rt-page-btn${isCurrent ? ' current' : ''}"
+        data-page="${page}" ${disabled ? 'disabled' : ''}>${label}</button>`);
+    };
+
+    addBtn('‹', currentPage - 1, false, currentPage === 1);
+
+    // page window logic
+    const window_ = 2;
+    const lo = Math.max(1, currentPage - window_);
+    const hi = Math.min(pages, currentPage + window_);
+
+    if (lo > 1)   { addBtn(1, 1, false, false); if (lo > 2) pageButtons.push(`<span class="rt-page-btn" style="cursor:default;opacity:.3">…</span>`); }
+    for (let p = lo; p <= hi; p++) addBtn(p, p, p === currentPage, false);
+    if (hi < pages) { if (hi < pages - 1) pageButtons.push(`<span class="rt-page-btn" style="cursor:default;opacity:.3">…</span>`); addBtn(pages, pages, false, false); }
+
+    addBtn('›', currentPage + 1, false, currentPage === pages);
+
+    const sizes = [10, 25, 50, 100].map(s =>
+      `<option value="${s}" ${s === pageSize ? 'selected' : ''}>${s} / page</option>`
+    ).join('');
+
+    pag.innerHTML = pageButtons.join('') +
+      `<select class="rt-page-size" id="rt-page-size">${sizes}</select>` +
+      `<span class="rt-page-info">
+        ${(start + 1).toLocaleString()}–${(start + count).toLocaleString()} of ${total.toLocaleString()}
+      </span>`;
+
+    pag.querySelectorAll('.rt-page-btn[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPage = +btn.dataset.page;
+        redraw();
+      });
+    });
+
+    pag.querySelector('#rt-page-size').addEventListener('change', e => {
+      pageSize    = +e.target.value;
+      currentPage = 1;
+      redraw();
+    });
+  }
+
+  /* ── helpers ── */
+  function detectColTypes(cols, rows) {
+    const sample = rows.slice(0, 200);
+    const types  = {};
+    for (const col of cols) {
+      let numCount = 0, total = 0;
+      for (const row of sample) {
+        const v = row[col];
+        if (v !== null && v !== undefined && v !== '') { total++; if (typeof v === 'number') numCount++; }
+      }
+      types[col] = total > 0 && numCount / total > 0.7 ? 'numeric' : 'string';
+    }
+    return types;
+  }
+
+  function fmtNum(n) {
+    if (!isFinite(n)) return String(n);
+    // Use locale formatting, up to 4 decimal places, trimming trailing zeros
+    return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  }
+
+  /* ── initial draw ── */
+  redraw();
+
+  /* ── return controller ── (callable from console) */
+  return { redraw, getState: () => ({ sortCol, sortDir, searchTerm, currentPage, pageSize, visibleCols }) };
 }
 
 /* ── UI helpers ───────────────────────────────── */

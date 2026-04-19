@@ -752,6 +752,177 @@
   }
   .rt-page-size:focus { border-color: var(--accent); }
 
+  /* ─── SUMMARY CARDS ─── */
+  #sc-container {
+    margin-bottom: 40px;
+  }
+
+  .sc-remap-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .sc-remap-bar span { color: var(--text-dim); white-space: nowrap; }
+
+  .sc-remap-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 8px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .15s;
+    max-width: 180px;
+  }
+  .sc-remap-select:focus { border-color: var(--accent); }
+
+  .sc-remap-label {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .sc-remap-sep {
+    color: var(--border);
+    font-size: 16px;
+    font-weight: 300;
+  }
+
+  .sc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  @media (max-width: 860px) { .sc-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .sc-grid { grid-template-columns: 1fr; } }
+
+  .sc-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 22px 18px;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+    animation: scCardIn .45s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .sc-card:nth-child(1) { animation-delay: .04s; }
+  .sc-card:nth-child(2) { animation-delay: .10s; }
+  .sc-card:nth-child(3) { animation-delay: .16s; }
+  .sc-card:nth-child(4) { animation-delay: .22s; }
+
+  @keyframes scCardIn {
+    from { opacity: 0; transform: translateY(16px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .sc-card:hover { border-color: var(--sc-color, var(--accent)); transform: translateY(-2px); }
+
+  /* accent stripe top */
+  .sc-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--sc-color, var(--accent));
+    opacity: .7;
+  }
+
+  /* faint glow blob */
+  .sc-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; right: -20px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--sc-color, var(--accent));
+    opacity: .04;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .sc-card:hover::after { opacity: .09; }
+
+  .sc-icon {
+    font-size: 18px;
+    margin-bottom: 12px;
+    display: block;
+    line-height: 1;
+  }
+
+  .sc-metric {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .sc-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--sc-color, var(--accent));
+    line-height: 1.1;
+    margin-bottom: 4px;
+    word-break: break-all;
+  }
+
+  .sc-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .sc-sub strong { color: var(--text); }
+
+  .sc-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--mono);
+    font-size: 10px;
+    margin-top: 6px;
+    padding: 2px 7px;
+    border-radius: 100px;
+    background: rgba(255,255,255,.05);
+  }
+
+  .sc-delta.up   { color: #4dffb4; background: rgba(77,255,180,.08); }
+  .sc-delta.down { color: var(--danger); background: rgba(255,77,106,.08); }
+  .sc-delta.neutral { color: var(--text-dim); }
+
+  .sc-col-badge {
+    position: absolute;
+    top: 10px; right: 12px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   /* ─── RESET TABLE BAR ─── */
   #rst-bar {
     display: none;
@@ -895,6 +1066,13 @@
         <span class="pill" id="filename-pill"></span>
       </div>
       <div class="meta-grid" id="meta-grid"></div>
+
+      <!-- SUMMARY CARDS -->
+      <div class="section-header">
+        <h3>Render Summary Cards</h3>
+        <span class="pill">mean score · top scorer · pass rate · avg study hrs</span>
+      </div>
+      <div id="sc-container"></div>
 
       <!-- COLUMN PROFILE -->
       <div class="section-header">
@@ -1215,6 +1393,9 @@ function renderDashboard(filename) {
   /* window.DS inspector */
   document.getElementById('ds-pre').innerHTML = renderDSInspector(DS);
 
+  /* renderSummaryCards — 4 stat cards */
+  window.SC  = renderSummaryCards(DS.rows, { headers: DS.headers });
+
   /* renderTable — full interactive data table */
   window.RT  = renderTable(DS.rows, { pageSize: 25 });
 
@@ -1259,6 +1440,254 @@ ${statSample},
     …
   },
 }`;
+}
+
+/* ── renderSummaryCards ───────────────────────── */
+/**
+ * renderSummaryCards(data, options?) — renders 4 domain-aware stat cards:
+ *   1. Mean Score       — average of the primary numeric score column
+ *   2. Top Scorer       — name + value of the row with the highest score
+ *   3. Pass Rate        — % of rows at or above a pass threshold
+ *   4. Avg Study Hours  — average of the study hours / time column
+ *
+ * Column auto-detection: scans header names for semantic hints.
+ * All column mappings are overridable via a remap bar in the UI
+ * or via the options object.
+ *
+ * @param {object[]} data          - Array of row objects (e.g. window.DS.rows)
+ * @param {object}   [options]
+ *   @param {string}   [options.target]        - CSS selector (default '#sc-container')
+ *   @param {string}   [options.scoreCol]      - Column for mean/top/pass calculations
+ *   @param {string}   [options.nameCol]       - Column for "top scorer" label
+ *   @param {string}   [options.studyCol]      - Column for avg study hours
+ *   @param {number}   [options.passThreshold] - Value >= this is a pass (default 50)
+ *   @param {string[]} [options.headers]       - All column names (for remap dropdowns)
+ *
+ * Returns a controller:
+ *   window.SC = { refresh(data, opts), getConfig(), setThreshold(n) }
+ */
+function renderSummaryCards(data, options = {}) {
+  if (!data || !data.length) return;
+
+  const mount = document.querySelector(options.target || '#sc-container');
+  if (!mount) return;
+
+  const allHeaders = options.headers || Object.keys(data[0]);
+
+  /* ── column auto-detection ── */
+  const SCORE_HINTS  = ['score', 'grade', 'mark', 'result', 'gpa', 'rating', 'points', 'exam', 'test', 'math', 'reading', 'writing', 'performance'];
+  const NAME_HINTS   = ['name', 'student', 'person', 'id', 'country', 'title', 'label', 'series'];
+  const STUDY_HINTS  = ['study', 'hour', 'time', 'hrs', 'duration', 'practice', 'prep', 'learning'];
+
+  function bestCol(hints, fallback) {
+    const lower = allHeaders.map(h => ({ h, l: h.toLowerCase() }));
+    for (const hint of hints) {
+      const m = lower.find(({ l }) => l.includes(hint));
+      if (m) return m.h;
+    }
+    return fallback;
+  }
+
+  /* numeric columns only for score/study */
+  const numericCols = allHeaders.filter(h => {
+    const sample = data.slice(0, 100).map(r => r[h]).filter(v => v !== null && v !== undefined && v !== '');
+    return sample.length > 0 && sample.filter(v => typeof v === 'number').length / sample.length > 0.6;
+  });
+
+  const stringCols = allHeaders.filter(h => !numericCols.includes(h));
+
+  /* mutable config */
+  let cfg = {
+    scoreCol      : options.scoreCol      || bestCol(SCORE_HINTS, numericCols[0] || allHeaders[0]),
+    nameCol       : options.nameCol       || bestCol(NAME_HINTS,  stringCols[0]  || allHeaders[0]),
+    studyCol      : options.studyCol      || bestCol(STUDY_HINTS, numericCols[1] || numericCols[0] || allHeaders[0]),
+    passThreshold : options.passThreshold ?? 50,
+  };
+
+  /* ── stat computation ── */
+  function compute(rows, c) {
+    const scores = rows
+      .map(r => r[c.scoreCol])
+      .filter(v => typeof v === 'number' && isFinite(v));
+
+    const studyVals = rows
+      .map(r => r[c.studyCol])
+      .filter(v => typeof v === 'number' && isFinite(v));
+
+    /* mean score */
+    const mean = scores.length
+      ? scores.reduce((s, v) => s + v, 0) / scores.length
+      : null;
+
+    /* top scorer — row with highest scoreCol value */
+    let topRow = null, topVal = -Infinity;
+    for (const row of rows) {
+      const v = row[c.scoreCol];
+      if (typeof v === 'number' && isFinite(v) && v > topVal) {
+        topVal = v; topRow = row;
+      }
+    }
+
+    /* pass rate */
+    const passCount = scores.filter(v => v >= c.passThreshold).length;
+    const passRate  = scores.length ? (passCount / scores.length) * 100 : null;
+
+    /* avg study hours */
+    const avgStudy = studyVals.length
+      ? studyVals.reduce((s, v) => s + v, 0) / studyVals.length
+      : null;
+
+    return {
+      mean, topRow, topVal, topName: topRow ? topRow[c.nameCol] : null,
+      passRate, passCount, totalScored: scores.length,
+      avgStudy, studyCount: studyVals.length,
+    };
+  }
+
+  /* ── number formatters ── */
+  const f2   = n => (n == null ? '—' : (+n).toFixed(2));
+  const f1   = n => (n == null ? '—' : (+n).toFixed(1));
+  const fpct = n => (n == null ? '—' : (+n).toFixed(1) + '%');
+  const fshort = n => {
+    if (n == null || !isFinite(n)) return '—';
+    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return (+n).toFixed(2);
+  };
+
+  /* ── render ── */
+  function render() {
+    const stats = compute(data, cfg);
+
+    /* pass rate colour hint */
+    const passColour = stats.passRate == null ? 'var(--muted)'
+      : stats.passRate >= 75 ? '#4dffb4'
+      : stats.passRate >= 50 ? 'var(--accent)'
+      : 'var(--danger)';
+
+    /* delta badge for pass rate */
+    const passDelta = stats.passRate == null ? ''
+      : stats.passRate >= 75
+        ? `<span class="sc-delta up">▲ above target</span>`
+        : stats.passRate >= 50
+          ? `<span class="sc-delta neutral">≈ at threshold</span>`
+          : `<span class="sc-delta down">▼ below target</span>`;
+
+    const topLabel = stats.topName != null
+      ? String(stats.topName).slice(0, 28) + (String(stats.topName).length > 28 ? '…' : '')
+      : '—';
+
+    /* remap selects */
+    const colOpts = (sel) => allHeaders.map(h =>
+      `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h)}</option>`
+    ).join('');
+
+    const numOpts = (sel) => numericCols.map(h =>
+      `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h)}</option>`
+    ).join('');
+
+    mount.innerHTML = `
+      <!-- Remap bar -->
+      <div class="sc-remap-bar">
+        <span>Score col:</span>
+        <select class="sc-remap-select" id="sc-score-col">${numOpts(cfg.scoreCol)}</select>
+        <span class="sc-remap-sep">|</span>
+        <span>Name col:</span>
+        <select class="sc-remap-select" id="sc-name-col">${colOpts(cfg.nameCol)}</select>
+        <span class="sc-remap-sep">|</span>
+        <span>Study hrs col:</span>
+        <select class="sc-remap-select" id="sc-study-col">${numOpts(cfg.studyCol)}</select>
+        <span class="sc-remap-sep">|</span>
+        <span>Pass ≥</span>
+        <input type="number" id="sc-pass-thresh"
+               value="${cfg.passThreshold}" min="0" step="1"
+               style="width:64px;background:var(--bg);border:1px solid var(--border);
+                      border-radius:var(--radius);color:var(--text);
+                      font-family:var(--mono);font-size:11px;padding:4px 8px;outline:none;" />
+      </div>
+
+      <!-- 4 cards -->
+      <div class="sc-grid">
+
+        <!-- 1. Mean Score -->
+        <div class="sc-card" style="--sc-color: var(--accent)">
+          <span class="sc-col-badge" title="${esc(cfg.scoreCol)}">${esc(cfg.scoreCol)}</span>
+          <span class="sc-icon">📊</span>
+          <div class="sc-metric">Mean Score</div>
+          <div class="sc-value">${f2(stats.mean)}</div>
+          <div class="sc-sub">
+            across <strong>${stats.totalScored.toLocaleString()}</strong> records<br/>
+            range: ${fshort(stats.totalScored ? Math.min(...data.map(r => r[cfg.scoreCol]).filter(v => typeof v === 'number')) : null)}
+            – ${fshort(stats.topVal === -Infinity ? null : stats.topVal)}
+          </div>
+        </div>
+
+        <!-- 2. Top Scorer -->
+        <div class="sc-card" style="--sc-color: #c084fc">
+          <span class="sc-col-badge" title="${esc(cfg.nameCol)}">${esc(cfg.nameCol)}</span>
+          <span class="sc-icon">🏆</span>
+          <div class="sc-metric">Top Scorer</div>
+          <div class="sc-value" style="font-size:${topLabel.length > 14 ? '16px' : '22px'}">${esc(topLabel)}</div>
+          <div class="sc-sub">
+            score: <strong>${fshort(stats.topVal === -Infinity ? null : stats.topVal)}</strong><br/>
+            col: ${esc(cfg.scoreCol)}
+          </div>
+        </div>
+
+        <!-- 3. Pass Rate -->
+        <div class="sc-card" style="--sc-color: ${passColour}">
+          <span class="sc-col-badge" title="≥ ${cfg.passThreshold}">≥ ${cfg.passThreshold}</span>
+          <span class="sc-icon">✅</span>
+          <div class="sc-metric">Pass Rate</div>
+          <div class="sc-value" style="color:${passColour}">${fpct(stats.passRate)}</div>
+          <div class="sc-sub">
+            <strong>${stats.passCount.toLocaleString()}</strong> of ${stats.totalScored.toLocaleString()} passed
+          </div>
+          ${passDelta}
+        </div>
+
+        <!-- 4. Avg Study Hours -->
+        <div class="sc-card" style="--sc-color: var(--accent2)">
+          <span class="sc-col-badge" title="${esc(cfg.studyCol)}">${esc(cfg.studyCol)}</span>
+          <span class="sc-icon">📚</span>
+          <div class="sc-metric">Avg Study Hrs</div>
+          <div class="sc-value">${f1(stats.avgStudy)}</div>
+          <div class="sc-sub">
+            across <strong>${stats.studyCount.toLocaleString()}</strong> records<br/>
+            col: ${esc(cfg.studyCol)}
+          </div>
+        </div>
+
+      </div><!-- /.sc-grid -->
+    `;
+
+    /* wire remap controls */
+    mount.querySelector('#sc-score-col').addEventListener('change', e => {
+      cfg.scoreCol = e.target.value; render();
+    });
+    mount.querySelector('#sc-name-col').addEventListener('change', e => {
+      cfg.nameCol = e.target.value; render();
+    });
+    mount.querySelector('#sc-study-col').addEventListener('change', e => {
+      cfg.studyCol = e.target.value; render();
+    });
+    mount.querySelector('#sc-pass-thresh').addEventListener('change', e => {
+      const v = parseFloat(e.target.value);
+      if (isFinite(v)) { cfg.passThreshold = v; render(); }
+    });
+  }
+
+  render();
+
+  return {
+    refresh      : (newData, opts = {}) => {
+      if (newData) data = newData;
+      Object.assign(cfg, opts);
+      render();
+    },
+    getConfig    : () => ({ ...cfg }),
+    setThreshold : (n) => { cfg.passThreshold = n; render(); },
+  };
 }
 
 /* ── resetTable ───────────────────────────────── */
@@ -1998,4 +2427,4 @@ function handleFileSelect(input) {
 }
 </script>
 </body>
-</html> 
+</html>

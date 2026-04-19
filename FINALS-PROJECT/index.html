@@ -752,6 +752,79 @@
   }
   .rt-page-size:focus { border-color: var(--accent); }
 
+  /* ─── RESET TABLE BAR ─── */
+  #rst-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255,77,106,.06);
+    border: 1px solid rgba(255,77,106,.2);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    animation: fadeUp .25s ease both;
+  }
+  #rst-bar.visible { display: flex; }
+
+  .rst-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--danger);
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .rst-snapshot-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .rst-snap-btn {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 9px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .rst-snap-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .rst-save-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .rst-save-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .rst-reset-btn {
+    background: rgba(255,77,106,.1);
+    border: 1px solid rgba(255,77,106,.3);
+    border-radius: var(--radius);
+    color: var(--danger);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .rst-reset-btn:hover { background: rgba(255,77,106,.18); border-color: var(--danger); }
+
   /* ─── UTILS ─── */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
@@ -893,6 +966,13 @@
       <div class="section-header" style="margin-top:40px">
         <h3>renderTable</h3>
         <span class="pill" id="rt-row-pill">—</span>
+      </div>
+      <!-- Reset bar — shown whenever the table is in a modified state -->
+      <div id="rst-bar">
+        <span class="rst-label" id="rst-label">Table modified</span>
+        <div class="rst-snapshot-list" id="rst-snap-list"></div>
+        <button class="rst-save-btn" id="rst-save-snap-btn" title="Save current view as a named snapshot">⊕ Save snapshot</button>
+        <button class="rst-reset-btn" id="rst-reset-btn">↺ Reset to original</button>
       </div>
       <div id="rt-container"></div>
 
@@ -1141,6 +1221,9 @@ function renderDashboard(filename) {
   /* applyFilterSort — filter by name, sort by column */
   window.AFS = applyFilterSort(DS);
 
+  /* resetTable — restore original view, manage snapshots */
+  window.RST = resetTable(DS);
+
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('upload-zone').style.display = 'none';
 }
@@ -1176,6 +1259,162 @@ ${statSample},
     …
   },
 }`;
+}
+
+/* ── resetTable ───────────────────────────────── */
+/**
+ * resetTable(ds) — restore the renderTable view to its original state,
+ * clearing all filters, sorts, searches, and column visibility changes
+ * applied by applyFilterSort() or manual table interaction.
+ *
+ * Also provides a named snapshot system so users can save and
+ * jump between views without losing work.
+ *
+ * Integrates with:
+ *   window.RT  (renderTable controller)
+ *   window.AFS (applyFilterSort controller)
+ *
+ * Returns a controller:
+ *   window.RST = {
+ *     reset(silent?)       — full reset to original, clears AFS panel
+ *     saveSnapshot(label?) — snapshot current RT + AFS state
+ *     restoreSnapshot(id)  — jump back to a named snapshot
+ *     listSnapshots()      — array of saved snapshots
+ *     getHistory()         — ordered reset/apply history log
+ *   }
+ */
+function resetTable(ds) {
+  /* ── snapshot store ── */
+  const snapshots = [];       // [{ id, label, ts, rtState, afsState }]
+  const history   = [];       // [{ action, ts, detail }]
+  let   snapIdSeq = 0;
+
+  /* ── DOM refs (wired after RT + AFS are live) ── */
+  const bar         = document.getElementById('rst-bar');
+  const rstLabel    = document.getElementById('rst-label');
+  const snapList    = document.getElementById('rst-snap-list');
+  const saveBtn     = document.getElementById('rst-save-snap-btn');
+  const resetBtn    = document.getElementById('rst-reset-btn');
+
+  /* ── show/hide the reset bar ── */
+  function setBarVisible(on, reason) {
+    bar.classList.toggle('visible', on);
+    if (on && reason) rstLabel.textContent = reason;
+  }
+
+  /* ── snapshot helpers ── */
+  function captureState(label) {
+    const rtState  = window.RT  ? window.RT.getState()  : null;
+    const afsState = window.AFS ? window.AFS.getState() : null;
+    return { id: ++snapIdSeq, label: label || `Snapshot ${snapIdSeq}`, ts: new Date(), rtState, afsState };
+  }
+
+  function renderSnapButtons() {
+    snapList.innerHTML = snapshots.map(s =>
+      `<button class="rst-snap-btn" data-id="${s.id}" title="${s.ts.toLocaleTimeString()}">
+        ⊡ ${esc(s.label)}
+      </button>`
+    ).join('');
+    snapList.querySelectorAll('.rst-snap-btn').forEach(btn => {
+      btn.addEventListener('click', () => restoreSnapshot(+btn.dataset.id));
+    });
+  }
+
+  /* ── core reset ── */
+  function reset(silent = false) {
+    // 1. Reset renderTable internal state
+    if (window.RT) {
+      window.RT.resetData();       // clears externalData, goes back to full ds.rows
+    }
+
+    // 2. Reset applyFilterSort panel
+    if (window.AFS) {
+      window.AFS.clear();          // clears filter input, sort, chips
+    }
+
+    // 3. Clear the table's own search input
+    const searchInput = document.querySelector('#rt-search-input');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.dispatchEvent(new Event('input'));   // triggers RT's internal search reset
+    }
+
+    // 4. Hide the reset bar (we're back to baseline)
+    setBarVisible(false);
+
+    // 5. Log
+    if (!silent) {
+      history.push({ action: 'reset', ts: new Date(), detail: 'Restored original view' });
+    }
+  }
+
+  /* ── save snapshot ── */
+  function saveSnapshot(label) {
+    const snap = captureState(label);
+    snapshots.push(snap);
+    history.push({ action: 'snapshot', ts: snap.ts, detail: snap.label });
+    renderSnapButtons();
+    setBarVisible(true, `${snapshots.length} snapshot${snapshots.length > 1 ? 's' : ''} saved`);
+    return snap.id;
+  }
+
+  /* ── restore snapshot ── */
+  function restoreSnapshot(id) {
+    const snap = snapshots.find(s => s.id === id);
+    if (!snap) return;
+
+    const { afsState, rtState } = snap;
+
+    // Replay AFS state
+    if (window.AFS && afsState) {
+      window.AFS.apply(
+        afsState.filterVal,
+        afsState.sortCol,
+        afsState.sortDir,
+        afsState.mode
+      );
+    }
+
+    history.push({ action: 'restore', ts: new Date(), detail: snap.label });
+    setBarVisible(true, `Restored: "${snap.label}"`);
+  }
+
+  /* ── wire UI buttons ── */
+  resetBtn.addEventListener('click', reset);
+
+  saveBtn.addEventListener('click', () => {
+    const label = prompt('Name this snapshot:', `View ${snapshots.length + 1}`) ?? '';
+    if (label.trim()) saveSnapshot(label.trim());
+    else if (label !== null) saveSnapshot();   // empty string → auto-label
+  });
+
+  /* ── watch for any modification to show the reset bar ── */
+  // Proxy renderTable's applyExternal to auto-show the bar
+  if (window.RT) {
+    const origApply = window.RT.applyFilterSort.bind(window.RT);
+    window.RT.applyFilterSort = function(rows, sortCol, sortDir) {
+      origApply(rows, sortCol, sortDir);
+      const filtered = rows?.length ?? 0;
+      const total    = ds.rowCount;
+      if (filtered < total || sortCol) {
+        setBarVisible(true, `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} rows`);
+      }
+    };
+
+    const origReset = window.RT.resetData.bind(window.RT);
+    window.RT.resetData = function() {
+      origReset();
+      setBarVisible(false);
+    };
+  }
+
+  return {
+    reset,
+    saveSnapshot,
+    restoreSnapshot,
+    listSnapshots : () => snapshots.map(s => ({ id: s.id, label: s.label, ts: s.ts })),
+    getHistory    : () => [...history],
+  };
 }
 
 /* ── applyFilterSort ──────────────────────────── */
@@ -1758,5 +1997,5 @@ function handleFileSelect(input) {
   if (file) loadDataset(file);
 }
 </script>
-</body> 
-</html>
+</body>
+</html> 

@@ -997,7 +997,112 @@
   }
   .rst-reset-btn:hover { background: rgba(255,77,106,.18); border-color: var(--danger); }
 
+  /* ─── KPI STRIP ─── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp .4s ease both;
+  }
+  .kpi-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background: var(--kpi-color, var(--accent)); opacity:.8;
+  }
+  .kpi-label { font-family:var(--mono); font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px; }
+  .kpi-value { font-family:var(--mono); font-size:22px; font-weight:700; color:var(--kpi-color,var(--accent)); line-height:1.1; }
+  .kpi-sub   { font-family:var(--mono); font-size:9px; color:var(--muted); margin-top:4px; }
+  .kpi-delta { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-family:var(--mono);
+               margin-top:4px; padding:1px 6px; border-radius:100px; background:rgba(255,255,255,.05); }
+  .kpi-delta.up   { color:#4dffb4; background:rgba(77,255,180,.1); }
+  .kpi-delta.down { color:var(--danger); background:rgba(255,77,106,.1); }
+
+  /* ─── WB CONTROLS ─── */
+  .wb-controls {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .wb-ctrl-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .wb-label { font-family:var(--mono); font-size:9px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; white-space:nowrap; }
+  .wb-select {
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+    color:var(--text); font-family:var(--mono); font-size:11px; padding:5px 8px;
+    outline:none; cursor:pointer; max-width:340px; flex:1;
+  }
+  .wb-select:focus { border-color:var(--accent); }
+  .wb-range { flex:1; min-width:80px; max-width:120px; accent-color:var(--accent); cursor:pointer; }
+  .wb-year-label { font-family:var(--mono); font-size:10px; color:var(--accent); min-width:32px; text-align:center; }
+  .wb-preset-btn {
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+    color:var(--text-dim); font-family:var(--mono); font-size:10px; padding:4px 10px;
+    cursor:pointer; white-space:nowrap; transition:all .15s;
+  }
+  .wb-preset-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .wb-add-btn {
+    background:rgba(232,255,71,.1); border:1px solid rgba(232,255,71,.25);
+    border-radius:var(--radius); color:var(--accent); font-family:var(--mono);
+    font-size:10px; padding:4px 10px; cursor:pointer; white-space:nowrap; transition:all .15s;
+  }
+  .wb-add-btn:hover { background:rgba(232,255,71,.18); }
+  .wb-country-chips { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .wb-chip {
+    display:inline-flex; align-items:center; gap:5px;
+    background:rgba(71,200,255,.1); border:1px solid rgba(71,200,255,.25);
+    color:var(--accent2); font-family:var(--mono); font-size:10px;
+    padding:3px 9px; border-radius:100px; cursor:default;
+  }
+  .wb-chip-x { cursor:pointer; opacity:.6; font-size:13px; line-height:1; }
+  .wb-chip-x:hover { opacity:1; color:var(--danger); }
+  .wb-country-dropdown {
+    position:absolute; z-index:200; background:var(--surface);
+    border:1px solid var(--border); border-radius:var(--radius);
+    max-height:220px; overflow-y:auto; min-width:220px;
+    box-shadow:0 8px 32px rgba(0,0,0,.5); font-family:var(--mono); font-size:11px;
+  }
+  .wb-dropdown-item {
+    padding:7px 14px; cursor:pointer; color:var(--text-dim); transition:background .1s;
+  }
+  .wb-dropdown-item:hover { background:rgba(255,255,255,.04); color:var(--text); }
+  .wb-dropdown-search {
+    width:100%; background:var(--bg); border:none; border-bottom:1px solid var(--border);
+    color:var(--text); font-family:var(--mono); font-size:11px; padding:8px 12px; outline:none;
+  }
+
+  /* ─── CHART TILE HEADER ─── */
+  .chart-tile-header {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    margin-bottom:14px; gap:12px;
+  }
+  .chart-legend { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .legend-item  { display:flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; color:var(--text-dim); }
+  .legend-dot   { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .legend-line  { width:16px; height:2px; flex-shrink:0; }
+
+  /* ─── TWO COL ─── */
+  .two-col { grid-template-columns: 1fr 1fr; }
+  @media (max-width:860px) { .two-col { grid-template-columns:1fr; } }
+
   /* ─── CHART SECTIONS ─── */
+
   .chart-section-header {
     display: flex; align-items: baseline; gap: 12px;
     margin: 48px 0 20px;
@@ -1034,7 +1139,10 @@
     border: 2px dashed var(--border); border-radius: 6px;
     color: var(--muted); font-family: var(--mono); font-size: 12px; text-align: center;
   }
-  canvas { max-height: 260px; }
+  /* Per-chart height controls — do NOT use a global canvas max-height as it conflicts with Chart.js */
+  #barChart     { min-height: 340px; }
+  #scatterChart { min-height: 260px; max-height: 300px; }
+  #doughnutChart{ max-height: 260px; }
   .analysis-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
   @media (max-width: 960px) { .analysis-grid { grid-template-columns: 1fr; } }
   .analysis-tile {
@@ -1236,79 +1344,127 @@
       <!-- ═══════════════════════════════════════
            SECTION 2 — VISUALIZATIONS (STUDENT 2)
       ════════════════════════════════════════ -->
-      <div class="chart-section-header" id="sec-viz-header" style="display:none;">
-        <h3>Visualizations</h3>
-        <span class="pill badge-s2">Student 2 · feature/viz-analysis</span>
-      </div>
-      <div class="chart-row" id="sec-viz-charts" style="display:none;">
-        <div class="chart-tile">
-          <h4>Top 10 — Final Scores</h4>
-          <p class="chart-sub">Sorted descending · hover for detail</p>
-          <div class="chart-placeholder" id="barPlaceholder"><span>📊</span>Loading…</div>
-          <canvas id="barChart" style="display:none;"></canvas>
-        </div>
-        <div class="chart-tile">
-          <h4>Grade Distribution</h4>
-          <p class="chart-sub">All students · A / B / C / D breakdown</p>
-          <div class="chart-placeholder" id="doughnutPlaceholder"><span>🍩</span>Loading…</div>
-          <canvas id="doughnutChart" style="display:none;"></canvas>
-        </div>
-      </div>
-      <div class="chart-tile" id="sec-viz-scatter" style="display:none; margin-bottom:16px;">
-        <h4>Attendance % vs Final Score</h4>
-        <p class="chart-sub">Each point = one student · includes regression line overlay</p>
-        <div class="chart-placeholder" id="scatterPlaceholder" style="height:160px;"><span>🔵</span>Loading…</div>
-        <canvas id="scatterChart" style="display:none; max-height:220px;"></canvas>
-      </div>
+      <div id="s2-root" style="display:none;">
 
-      <!-- ═══════════════════════════════════════
-           SECTION 3 — STATISTICAL ANALYSIS (STUDENT 2)
-      ════════════════════════════════════════ -->
-      <div class="chart-section-header" id="sec-analysis-header" style="display:none;">
-        <h3>Statistical Analysis</h3>
-        <span class="pill badge-s2">Student 2 · feature/viz-analysis</span>
-      </div>
-      <div class="analysis-grid" id="sec-analysis-grid" style="display:none;">
-        <div class="analysis-tile">
-          <h4>Descriptive Statistics</h4>
-          <ul class="kv-list">
-            <li><span class="k">n (sample size)</span>   <span class="v" id="an">—</span></li>
-            <li><span class="k">Min score</span>          <span class="v" id="aMin">—</span></li>
-            <li><span class="k">Max score</span>          <span class="v" id="aMax">—</span></li>
-            <li><span class="k">Range</span>              <span class="v" id="aRange">—</span></li>
-            <li><span class="k">Variance σ²</span>        <span class="v" id="aVariance">—</span></li>
-            <li><span class="k">Std Dev σ</span>          <span class="v" id="aStdDev">—</span></li>
-          </ul>
+        <!-- KPI strip -->
+        <div class="chart-section-header" id="sec-viz-header">
+          <h3 id="s2-section-title">Data Insights</h3>
+          <span class="pill badge-s2">Student 2 · feature/viz-analysis</span>
         </div>
-        <div class="analysis-tile">
-          <h4>Correlation Analysis</h4>
-          <ul class="kv-list">
-            <li><span class="k">Pearson r (hours→score)</span>  <span class="v" id="rPearson">—</span></li>
-            <li><span class="k">Interpretation</span>           <span class="v" id="rInterp">—</span></li>
-            <li><span class="k">Pearson r (attend→score)</span> <span class="v" id="rPearson2">—</span></li>
-            <li><span class="k">Interpretation</span>           <span class="v" id="rInterp2">—</span></li>
-            <li><span class="k">Stronger predictor</span>       <span class="v" id="rStronger">—</span></li>
-            <li><span class="k">Direction</span>                <span class="v" id="rDirection">—</span></li>
-          </ul>
+        <div id="kpi-strip" class="kpi-strip"></div>
+
+        <!-- Chart controls (world bank mode) -->
+        <div id="wb-controls" class="wb-controls" style="display:none;">
+          <div class="wb-ctrl-row">
+            <label class="wb-label">Series</label>
+            <select id="wb-series-select" class="wb-select"></select>
+            <label class="wb-label">Countries</label>
+            <div class="wb-country-chips" id="wb-country-chips"></div>
+            <button class="wb-add-btn" id="wb-add-country">+ Add</button>
+            <div class="wb-country-dropdown" id="wb-country-dropdown" style="display:none;"></div>
+          </div>
+          <div class="wb-ctrl-row">
+            <label class="wb-label">Year range</label>
+            <span class="wb-year-label" id="wb-year-start-lbl">1960</span>
+            <input type="range" id="wb-year-start" class="wb-range" min="0" max="63" value="0">
+            <span class="wb-year-label">—</span>
+            <input type="range" id="wb-year-end"   class="wb-range" min="0" max="63" value="63">
+            <span class="wb-year-label" id="wb-year-end-lbl">2023</span>
+            <button class="wb-preset-btn" data-start="50" data-end="63">Last 15 yrs</button>
+            <button class="wb-preset-btn" data-start="30" data-end="63">Last 30 yrs</button>
+            <button class="wb-preset-btn" data-start="0"  data-end="63">All years</button>
+          </div>
         </div>
-        <div class="analysis-tile">
-          <h4>Linear Regression</h4>
-          <ul class="kv-list">
-            <li><span class="k">Equation</span>         <span class="v" id="regEquation">—</span></li>
-            <li><span class="k">Slope (m)</span>         <span class="v" id="regSlope">—</span></li>
-            <li><span class="k">Intercept (b)</span>    <span class="v" id="regIntercept">—</span></li>
-            <li><span class="k">R² (fit quality)</span> <span class="v" id="regR2">—</span></li>
-            <li><span class="k">Interpretation</span>   <span class="v" id="regInterp">—</span></li>
-            <li><span class="k">Predicted @15 hrs</span><span class="v" id="regPredict">—</span></li>
-          </ul>
+
+        <!-- Main chart area -->
+        <div class="chart-row" id="sec-viz-charts">
+          <div class="chart-tile" style="grid-column: 1 / -1; min-height: 440px;">
+            <div class="chart-tile-header">
+              <div>
+                <h4 id="main-chart-title">Time Series</h4>
+                <p class="chart-sub" id="main-chart-sub">Loading…</p>
+              </div>
+              <div class="chart-legend" id="main-chart-legend"></div>
+            </div>
+            <div class="chart-placeholder" id="barPlaceholder"><span>📈</span>Loading…</div>
+            <canvas id="barChart" style="display:none;"></canvas>
+          </div>
         </div>
-      </div>
-      <div class="insights-panel" id="sec-insights" style="display:none;">
-        <h4>✦ Data-Driven Insights</h4>
-        <div id="insightsBody">
-          <p class="insight-text" style="color:var(--muted);">Awaiting data load…</p>
+
+        <!-- Bottom row: two supporting charts -->
+        <div class="chart-row two-col" id="sec-viz-scatter" style="margin-bottom:16px;">
+          <div class="chart-tile">
+            <div class="chart-tile-header">
+              <div>
+                <h4 id="scatter-title">Distribution</h4>
+                <p class="chart-sub" id="scatter-sub">Latest year snapshot</p>
+              </div>
+            </div>
+            <div class="chart-placeholder" id="scatterPlaceholder"><span>📊</span>Loading…</div>
+            <canvas id="scatterChart" style="display:none; max-height:260px;"></canvas>
+          </div>
+          <div class="chart-tile">
+            <div class="chart-tile-header">
+              <div>
+                <h4 id="doughnut-title">Composition</h4>
+                <p class="chart-sub" id="doughnut-sub">Breakdown by group</p>
+              </div>
+            </div>
+            <div class="chart-placeholder" id="doughnutPlaceholder"><span>🍩</span>Loading…</div>
+            <canvas id="doughnutChart" style="display:none; max-height:260px;"></canvas>
+          </div>
         </div>
-      </div>
+
+        <!-- ═══════════════════════════════════════
+             SECTION 3 — STATISTICAL ANALYSIS
+        ════════════════════════════════════════ -->
+        <div class="chart-section-header" id="sec-analysis-header">
+          <h3>Statistical Analysis</h3>
+          <span class="pill badge-s2">Student 2 · feature/viz-analysis</span>
+        </div>
+        <div class="analysis-grid" id="sec-analysis-grid">
+          <div class="analysis-tile">
+            <h4 id="desc-tile-title">Descriptive Statistics</h4>
+            <ul class="kv-list">
+              <li><span class="k">n (records)</span>     <span class="v" id="an">—</span></li>
+              <li><span class="k" id="k-min">Min</span>  <span class="v" id="aMin">—</span></li>
+              <li><span class="k" id="k-max">Max</span>  <span class="v" id="aMax">—</span></li>
+              <li><span class="k">Range</span>            <span class="v" id="aRange">—</span></li>
+              <li><span class="k">Variance σ²</span>     <span class="v" id="aVariance">—</span></li>
+              <li><span class="k">Std Dev σ</span>       <span class="v" id="aStdDev">—</span></li>
+            </ul>
+          </div>
+          <div class="analysis-tile">
+            <h4>Correlation Analysis</h4>
+            <ul class="kv-list">
+              <li><span class="k" id="k-r1">Pearson r (col2→primary)</span> <span class="v" id="rPearson">—</span></li>
+              <li><span class="k">Interpretation</span>                      <span class="v" id="rInterp">—</span></li>
+              <li><span class="k" id="k-r2">Pearson r (col3→primary)</span> <span class="v" id="rPearson2">—</span></li>
+              <li><span class="k">Interpretation</span>                      <span class="v" id="rInterp2">—</span></li>
+              <li><span class="k">Stronger predictor</span>                  <span class="v" id="rStronger">—</span></li>
+              <li><span class="k">Direction</span>                           <span class="v" id="rDirection">—</span></li>
+            </ul>
+          </div>
+          <div class="analysis-tile">
+            <h4>Linear Regression</h4>
+            <ul class="kv-list">
+              <li><span class="k">Equation</span>             <span class="v" id="regEquation">—</span></li>
+              <li><span class="k">Slope (m)</span>            <span class="v" id="regSlope">—</span></li>
+              <li><span class="k">Intercept (b)</span>        <span class="v" id="regIntercept">—</span></li>
+              <li><span class="k">R² (fit quality)</span>    <span class="v" id="regR2">—</span></li>
+              <li><span class="k">Interpretation</span>       <span class="v" id="regInterp">—</span></li>
+              <li><span class="k" id="k-predict">Predicted @mean x</span><span class="v" id="regPredict">—</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="insights-panel" id="sec-insights">
+          <h4>✦ Data-Driven Insights</h4>
+          <div id="insightsBody">
+            <p class="insight-text" style="color:var(--muted);">Awaiting data load…</p>
+          </div>
+        </div>
+
+      </div><!-- /s2-root -->
 
     </div><!-- /dashboard -->
 
@@ -2582,584 +2738,924 @@ function handleFileSelect(input) {
    Branch: feature/viz-analysis
 ═══════════════════════════════════════════════════════════════════ */
 
-window.CHARTS = {};
+window.CHARTS  = {};
+window.S2      = {};   // shared state for WB mode
 
-/* ─────────────────────────────────────────────────────────────────
-   COLUMN DETECTION STRATEGY
-   The viz/analysis layer works with ANY CSV, not just the student
-   dataset.  We use three tiers:
+/* ─── PALETTE ─────────────────────────────────────────────────── */
+const S2_PALETTE = ['#e8ff47','#47c8ff','#4dffb4','#ff4d6a','#c084fc',
+                    '#fb923c','#38bdf8','#f472b6','#a3e635','#fbbf24'];
 
-   1. STUDENT MODE  — CSV has columns matching score/study/attend/grade
-      hints → full charts + statistical analysis rendered.
+/* ─── FORMAT HELPERS ──────────────────────────────────────────── */
+function fmtBig(n) {
+  if (!isFinite(n)) return '—';
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n/1e9).toFixed(2)+'B';
+  if (a >= 1e6) return (n/1e6).toFixed(2)+'M';
+  if (a >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return (+n).toFixed(2);
+}
+function fmtStat(n) { return isFinite(n) ? fmtBig(n) : '—'; }
+function s2Mean(arr) {
+  const c = arr.filter(v => typeof v==='number' && isFinite(v));
+  return c.length ? c.reduce((s,v)=>s+v,0)/c.length : 0;
+}
 
-   2. NUMERIC MODE  — Generic CSV with numeric columns but no student
-      hints → bar chart (top-10 values in best numeric col), scatter
-      (col1 vs col2), doughnut (quartile bands), plus general stats.
+/* ─── CHART DESTROY HELPER ────────────────────────────────────── */
+function destroyChart(id) {
+  if (window.CHARTS[id]) { window.CHARTS[id].destroy(); delete window.CHARTS[id]; }
+}
 
-   3. NON-NUMERIC   — No usable numeric columns → friendly message,
-      no charts shown.
-─────────────────────────────────────────────────────────────────── */
-
-/**
- * onDataReady(rows, headers)
- * Called by renderDashboard after data is fully loaded.
- */
+/* ═══════════════════════════════════════════════════════════════
+   ENTRY POINT — called by renderDashboard()
+═══════════════════════════════════════════════════════════════════ */
 function onDataReady(rows, headers) {
   if (!rows || !rows.length || !headers || !headers.length) return;
 
-  // ── Identify column types ──────────────────────────────────────
-  function isNumericCol(col) {
-    const sample = rows.slice(0, 200).map(r => r[col]).filter(v => v !== null && v !== undefined && v !== '');
-    if (!sample.length) return false;
-    return sample.filter(v => typeof v === 'number' && isFinite(v)).length / sample.length > 0.5;
+  // Detect World Bank format: has Country Name, Series Name, year columns
+  const h = headers.map(x => x.toLowerCase());
+  const isWB = h.some(x => x.includes('country') || x.includes('country name')) &&
+               h.some(x => x.includes('series'))  &&
+               headers.some(x => /^\d{4}/.test(x));
+
+  document.getElementById('s2-root').style.display = '';
+
+  if (isWB) {
+    initWorldBank(rows, headers);
+  } else {
+    initGeneric(rows, headers);
   }
+}
 
-  function isStringCol(col) {
-    const sample = rows.slice(0, 50).map(r => r[col]).filter(v => v !== null && v !== undefined && v !== '');
-    if (!sample.length) return false;
-    return sample.filter(v => typeof v === 'string' && v.trim() !== '').length / sample.length > 0.6;
-  }
+/* ═══════════════════════════════════════════════════════════════
+   WORLD BANK MODE
+═══════════════════════════════════════════════════════════════════ */
 
-  const numericCols = headers.filter(isNumericCol);
-  const stringCols  = headers.filter(isStringCol);
+// Aggregate codes to exclude from country pickers
+const WB_AGGREGATES = new Set([
+  'WLD','LMY','MIC','LMC','UMC','EAS','EAP','TEA','SAS','TSA','SSA','SSF','SSB',
+  'LTE','EAR','PRE','PST','ECS','ECA','TEC','LCN','LAC','TLA','MEA','MNA','TMN',
+  'NAC','OED','HIC','HPC','IDX','IDA','IBD','IBT','IDB','IDN','LIC','FCS','LDC',
+  'ARB','CSS','CEB','EMU','EUU','SFX','OSS','PSS','TSS','AFW','AFE'
+]);
 
-  if (!numericCols.length) {
-    // No numeric data — hide viz sections silently
-    return;
-  }
+// High-priority series to feature prominently
+const WB_FEATURED = [
+  'Population, total',
+  'Life expectancy at birth, total (years)',
+  'Fertility rate, total (births per woman)',
+  'Urban population (% of total)',
+  'Population growth (annual %)',
+  'Birth rate, crude (per 1,000 people)',
+  'Death rate, crude (per 1,000 people)',
+  'Age dependency ratio (% of working-age population)',
+];
 
-  // ── Semantic hints (student dataset) ──────────────────────────
-  const lower = headers.map(h => ({ h, l: h.toLowerCase() }));
-  function find(...hints) {
-    for (const hint of hints) {
-      const m = lower.find(({ l }) => l.includes(hint));
-      if (m && (numericCols.includes(m.h) || hints === nameHints)) return m.h;
+function initWorldBank(rows, headers) {
+  // Year columns (historical only, ≤ current year)
+  const yearCols = headers.filter(h => /^\d{4}/.test(h) && parseInt(h) <= 2024);
+  const yearLabels = yearCols.map(h => h.slice(0,4));
+
+  // Build lookup: seriesName → { countryCode → [values per year] }
+  const lookup = {};
+  // Also build: countryCode → countryName
+  const countryMap = {};
+  // Find header keys (case-insensitive)
+  const countryNameKey = headers.find(h => /country.?name/i.test(h)) || headers[0];
+  const countryCodeKey = headers.find(h => /country.?code/i.test(h)) || headers[1];
+  const seriesNameKey  = headers.find(h => /series.?name/i.test(h))  || headers[2];
+
+  rows.forEach(r => {
+    const sName = (r[seriesNameKey] || '').trim();
+    const cCode = (r[countryCodeKey] || '').trim();
+    const cName = (r[countryNameKey] || '').trim();
+    if (!sName || !cCode || !cName) return;
+    countryMap[cCode] = cName;
+    if (!lookup[sName]) lookup[sName] = {};
+    lookup[sName][cCode] = yearCols.map(yc => {
+      const raw = r[yc];
+      if (typeof raw === 'number' && isFinite(raw)) return raw;
+      const v = String(raw ?? '').trim();
+      return (v && v !== '..' && v !== 'null') ? parseFloat(v) : null;
+    });
+  });
+
+  // All individual countries (non-aggregate, 3-letter alpha)
+  const allCountries = Object.entries(countryMap)
+    .filter(([code]) => /^[A-Z]{3}$/.test(code) && !WB_AGGREGATES.has(code))
+    .sort((a,b) => a[1].localeCompare(b[1]));
+
+  // Sorted series list, featured first
+  const allSeries = Object.keys(lookup).sort((a,b) => {
+    const ai = WB_FEATURED.indexOf(a), bi = WB_FEATURED.indexOf(b);
+    if (ai >= 0 && bi >= 0) return ai - bi;
+    if (ai >= 0) return -1;
+    if (bi >= 0) return  1;
+    return a.localeCompare(b);
+  });
+
+  // Default selection
+  const defaultSeries   = allSeries[0] || '';
+  const defaultCountries = ['CHN','USA','IND','NGA','BRA'].filter(c => countryMap[c]);
+
+  // Store state
+  window.S2.wb = {
+    lookup, countryMap, allCountries, allSeries, yearCols, yearLabels,
+    selectedSeries: defaultSeries,
+    selectedCountries: [...defaultCountries],
+    yearStart: 0,
+    yearEnd: yearCols.length - 1,
+  };
+
+  // Show WB controls
+  document.getElementById('wb-controls').style.display = '';
+  document.getElementById('s2-section-title').textContent = 'World Bank Population Explorer';
+
+  buildWBControls();
+  buildWBKPIs();
+  renderWBCharts();
+  renderWBAnalysis();
+  renderWBInsights();
+}
+
+function buildWBControls() {
+  const st = window.S2.wb;
+
+  // Series select
+  const sel = document.getElementById('wb-series-select');
+  sel.innerHTML = st.allSeries.map((s,i) => {
+    const isFeatured = WB_FEATURED.includes(s);
+    return `<option value="${esc(s)}" ${s===st.selectedSeries?'selected':''} ${isFeatured?'':''}>${esc(s)}</option>`;
+  }).join('');
+  sel.addEventListener('change', () => {
+    st.selectedSeries = sel.value;
+    renderWBCharts();
+    renderWBAnalysis();
+    renderWBInsights();
+  });
+
+  // Year range sliders
+  const startSlider = document.getElementById('wb-year-start');
+  const endSlider   = document.getElementById('wb-year-end');
+  const startLbl    = document.getElementById('wb-year-start-lbl');
+  const endLbl      = document.getElementById('wb-year-end-lbl');
+  startSlider.max = endSlider.max = st.yearCols.length - 1;
+  startSlider.value = st.yearStart;
+  endSlider.value   = st.yearEnd;
+  startLbl.textContent = st.yearLabels[st.yearStart];
+  endLbl.textContent   = st.yearLabels[st.yearEnd];
+
+  startSlider.addEventListener('input', () => {
+    st.yearStart = Math.min(+startSlider.value, st.yearEnd - 1);
+    startSlider.value = st.yearStart;
+    startLbl.textContent = st.yearLabels[st.yearStart];
+    renderWBCharts(); renderWBAnalysis();
+  });
+  endSlider.addEventListener('input', () => {
+    st.yearEnd = Math.max(+endSlider.value, st.yearStart + 1);
+    endSlider.value = st.yearEnd;
+    endLbl.textContent = st.yearLabels[st.yearEnd];
+    renderWBCharts(); renderWBAnalysis();
+  });
+
+  // Preset buttons
+  document.querySelectorAll('.wb-preset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const total = st.yearCols.length - 1;
+      st.yearStart = Math.max(0, total - parseInt(btn.dataset.end === '63' ? total : btn.dataset.end === '50' ? 14 : 29));
+      if (btn.dataset.start === '0') st.yearStart = 0;
+      st.yearEnd = total;
+      startSlider.value = st.yearStart; endSlider.value = st.yearEnd;
+      startLbl.textContent = st.yearLabels[st.yearStart];
+      endLbl.textContent   = st.yearLabels[st.yearEnd];
+      renderWBCharts(); renderWBAnalysis();
+    });
+  });
+
+  // Country chips
+  renderCountryChips();
+
+  // Add country button + dropdown
+  const addBtn    = document.getElementById('wb-add-country');
+  const dropdown  = document.getElementById('wb-country-dropdown');
+  let dropdownBuilt = false;
+
+  addBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!dropdownBuilt) {
+      dropdown.innerHTML = `<input class="wb-dropdown-search" placeholder="Search country…" id="wb-dd-search">` +
+        st.allCountries.map(([code, name]) =>
+          `<div class="wb-dropdown-item" data-code="${esc(code)}">${esc(name)} <span style="color:var(--muted);font-size:9px">${code}</span></div>`
+        ).join('');
+      dropdownBuilt = true;
+      dropdown.querySelector('#wb-dd-search').addEventListener('input', e2 => {
+        const q = e2.target.value.toLowerCase();
+        dropdown.querySelectorAll('.wb-dropdown-item').forEach(el => {
+          el.style.display = el.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+      dropdown.querySelectorAll('.wb-dropdown-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const code = el.dataset.code;
+          if (!st.selectedCountries.includes(code)) {
+            st.selectedCountries.push(code);
+            renderCountryChips();
+            renderWBCharts(); renderWBAnalysis(); renderWBInsights();
+          }
+          dropdown.style.display = 'none';
+        });
+      });
+    }
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+    // Position dropdown relative to add button
+    const rect = addBtn.getBoundingClientRect();
+    dropdown.style.position = 'fixed';
+    dropdown.style.top  = (rect.bottom + 4) + 'px';
+    dropdown.style.left = rect.left + 'px';
+  });
+  document.addEventListener('click', () => { dropdown.style.display = 'none'; });
+}
+
+function renderCountryChips() {
+  const st = window.S2.wb;
+  const container = document.getElementById('wb-country-chips');
+  container.innerHTML = st.selectedCountries.map((code, i) => `
+    <span class="wb-chip" style="border-color:${S2_PALETTE[i % S2_PALETTE.length]}33; color:${S2_PALETTE[i % S2_PALETTE.length]}">
+      ${esc(st.countryMap[code] || code)}
+      <span class="wb-chip-x" data-code="${esc(code)}">×</span>
+    </span>`).join('');
+  container.querySelectorAll('.wb-chip-x').forEach(x => {
+    x.addEventListener('click', () => {
+      const st = window.S2.wb;
+      st.selectedCountries = st.selectedCountries.filter(c => c !== x.dataset.code);
+      renderCountryChips();
+      renderWBCharts(); renderWBAnalysis(); renderWBInsights();
+    });
+  });
+}
+
+function buildWBKPIs() {
+  const st     = window.S2.wb;
+  const lookup = st.lookup;
+
+  // World totals for key metrics in most recent available year
+  const getWorld = (series) => {
+    const d = lookup[series];
+    if (!d || !d['WLD']) return null;
+    const v = [...d['WLD']].reverse().find(x => x !== null);
+    return v ?? null;
+  };
+  const getWorldYear = (series) => {
+    const d = lookup[series];
+    if (!d || !d['WLD']) return null;
+    const idx = [...d['WLD']].map((v,i)=>[v,i]).reverse().find(([v])=>v!==null)?.[1];
+    return idx != null ? st.yearLabels[idx] : null;
+  };
+  const getWorldPrev = (series, stepsBack=10) => {
+    const d = lookup[series];
+    if (!d || !d['WLD']) return null;
+    const arr = d['WLD'];
+    const lastIdx = [...arr].map((v,i)=>[v,i]).reverse().find(([v])=>v!==null)?.[1];
+    if (lastIdx == null) return null;
+    for (let i = lastIdx - stepsBack; i >= 0; i--) {
+      if (arr[i] !== null) return arr[i];
     }
     return null;
-  }
-  const nameHints = ['name','student','person','country','title','label','id','series'];
+  };
 
-  const scoreCol  = find('score','final','mark','result','exam','points','gpa','grade') || numericCols[0];
-  const studyCol  = find('study','hour','hrs','time','duration','prep','learning')       || numericCols[1] || numericCols[0];
-  const attendCol = find('attend','presence','rate','percent','pct')                     || numericCols[2] || numericCols[0];
-  const gradeCol  = lower.find(({l}) => l === 'grade' || l === 'letter')?.h              || null;
-  const nameCol   = (() => {
-    for (const hint of nameHints) {
-      const m = lower.find(({ l }) => l.includes(hint));
-      if (m) return m.h;
-    }
-    return stringCols[0] || headers[0];
-  })();
+  const pop    = getWorld('Population, total');
+  const le     = getWorld('Life expectancy at birth, total (years)');
+  const fert   = getWorld('Fertility rate, total (births per woman)');
+  const urban  = getWorld('Urban population (% of total)');
+  const grow   = getWorld('Population growth (annual %)');
 
-  // ── Detect mode ───────────────────────────────────────────────
-  const isStudentMode = !!(
-    lower.find(({l}) => l.includes('score') || l.includes('final') || l.includes('mark')) &&
-    (lower.find(({l}) => l.includes('study') || l.includes('hour') || l.includes('hrs')) ||
-     lower.find(({l}) => l.includes('attend')))
-  );
+  const lePrev   = getWorldPrev('Life expectancy at birth, total (years)', 10);
+  const fertPrev = getWorldPrev('Fertility rate, total (births per woman)', 10);
+  const popPrev  = getWorldPrev('Population, total', 10);
 
-  // For non-student CSVs, pick the two most-populated numeric cols
-  // to use as scatter axes, and the first as the bar/stats col.
-  function colCoverage(col) {
-    return rows.filter(r => typeof r[col] === 'number' && isFinite(r[col])).length;
-  }
-  const sortedNumeric = [...numericCols].sort((a,b) => colCoverage(b) - colCoverage(a));
-  const primaryCol  = isStudentMode ? scoreCol  : sortedNumeric[0];
-  const secondaryCol= isStudentMode ? attendCol : (sortedNumeric[1] || sortedNumeric[0]);
-  const tertiaryCol = isStudentMode ? studyCol  : (sortedNumeric[2] || sortedNumeric[0]);
-
-  // ── Build adapted rows ────────────────────────────────────────
-  const adapted = rows
-    .map(r => {
-      const scoreVal  = parseFloat(r[primaryCol]);
-      const studyVal  = parseFloat(r[tertiaryCol]);
-      const attendVal = parseFloat(r[secondaryCol]);
-      if (!isFinite(scoreVal)) return null;   // skip rows with no primary value
-      const rawGrade = gradeCol ? r[gradeCol] : null;
-      return {
-        name       : String(r[nameCol] ?? '').trim() || '(no name)',
-        score      : scoreVal,
-        studyHours : isFinite(studyVal)  ? studyVal  : 0,
-        attendance : isFinite(attendVal) ? attendVal : 0,
-        grade      : rawGrade ? String(rawGrade).toUpperCase()[0] : deriveGrade(scoreVal),
-        job        : false,
-        // keep original row ref for tooltips
-        _raw       : r,
-      };
-    })
-    .filter(Boolean);
-
-  if (!adapted.length) return;
-
-  window.S2_DATA = adapted;
-  window.S2_COLS = { primaryCol, secondaryCol, tertiaryCol, nameCol, gradeCol, isStudentMode };
-
-  // ── Show Student 2 sections ───────────────────────────────────
-  ['sec-viz-header','sec-viz-charts','sec-viz-scatter',
-   'sec-analysis-header','sec-analysis-grid','sec-insights'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = '';
-  });
-
-  // Update section labels for non-student mode
-  if (!isStudentMode) {
-    const vizHeader = document.getElementById('sec-viz-header');
-    if (vizHeader) {
-      const h3 = vizHeader.querySelector('h3');
-      if (h3) h3.textContent = 'Visualizations — ' + primaryCol;
-    }
-    // update chart subtitles
-    const barSub = document.querySelector('#sec-viz-charts .chart-tile:first-child .chart-sub');
-    if (barSub) barSub.textContent = `Top 10 values · ${primaryCol}`;
-    const scatSub = document.querySelector('#sec-viz-scatter .chart-sub');
-    if (scatSub) scatSub.textContent = `${secondaryCol} vs ${primaryCol} · with regression line`;
-    const doughSub = document.querySelector('#sec-viz-charts .chart-tile:last-child .chart-sub');
-    if (doughSub) doughSub.textContent = `${primaryCol} quartile distribution`;
+  function delta(cur, prev) {
+    if (cur == null || prev == null) return '';
+    const d = cur - prev;
+    const cls = d >= 0 ? 'up' : 'down';
+    const arr = d >= 0 ? '▲' : '▼';
+    return `<span class="kpi-delta ${cls}">${arr} ${fmtBig(Math.abs(d))} vs 10yr ago</span>`;
   }
 
-  initCharts();
-  renderAnalysis(adapted, primaryCol, tertiaryCol, secondaryCol, isStudentMode);
-  renderInsights(adapted, primaryCol, tertiaryCol, secondaryCol, isStudentMode);
-}
-
-function deriveGrade(score) {
-  // Works for 0-100 scale; for other scales we bucket by percentile later
-  if (score >= 90) return 'A';
-  if (score >= 75) return 'B';
-  if (score >= 60) return 'C';
-  return 'D';
-}
-
-/* ── Shared math helpers ──────────────────────────────────────── */
-function s2Mean(arr) {
-  const clean = arr.filter(v => typeof v === 'number' && isFinite(v));
-  if (!clean.length) return 0;
-  return Math.round((clean.reduce((s, v) => s + v, 0) / clean.length) * 100) / 100;
-}
-
-/* ── PART A: CHART FUNCTIONS ─────────────────────────────────── */
-
-function initCharts() {
-  drawBarChart('barChart', window.S2_DATA);
-  drawDoughnut('doughnutChart', window.S2_DATA);
-  drawScatterPlot('scatterChart', window.S2_DATA);
-}
-
-function drawBarChart(canvasId, data) {
-  // Sort by score desc, top 10
-  const top10 = [...data].sort((a, b) => b.score - a.score).slice(0, 10);
-  if (window.CHARTS[canvasId]) window.CHARTS[canvasId].destroy();
-  const ctx = document.getElementById(canvasId).getContext('2d');
-
-  // Adaptive label: shorten long names
-  const labels = top10.map(d => d.name.length > 22 ? d.name.slice(0, 20) + '…' : d.name);
-
-  window.CHARTS[canvasId] = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: window.S2_COLS?.primaryCol || 'Score',
-        data: top10.map(d => d.score),
-        backgroundColor: 'rgba(232,255,71,0.75)',
-        borderColor:     'rgba(232,255,71,1)',
-        borderWidth: 1,
-        borderRadius: 3,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#13151a',
-          titleColor: '#e8ff47',
-          bodyColor: '#d8dde8',
-          titleFont: { family: "'Space Mono'", size: 11 },
-          bodyFont:  { family: "'Space Mono'", size: 11 },
-          callbacks: {
-            title: items => top10[items[0].dataIndex]?.name || '',
-            label: ctx  => ` ${window.S2_COLS?.primaryCol || 'Score'}: ${ctx.parsed.x}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
-          grid:  { color: '#1f2230' }
-        },
-        y: {
-          ticks: { color: '#d8dde8', font: { family: "'Space Mono'", size: 10 } },
-          grid:  { color: '#1f2230' }
-        }
-      }
-    }
-  });
-  document.getElementById('barPlaceholder').style.display = 'none';
-  document.getElementById(canvasId).style.display = 'block';
-}
-
-function drawScatterPlot(canvasId, data) {
-  // Filter to rows that have both axes
-  const valid = data.filter(d => isFinite(d.attendance) && d.attendance !== 0 && isFinite(d.score));
-  if (!valid.length) {
-    document.getElementById('scatterPlaceholder').textContent = 'Not enough numeric data for scatter plot.';
-    return;
-  }
-
-  const points = valid.map(d => ({ x: d.attendance, y: d.score }));
-  if (window.CHARTS[canvasId]) window.CHARTS[canvasId].destroy();
-
-  // Regression line
-  const reg  = linearRegression(valid.map(d => d.attendance), valid.map(d => d.score));
-  const xVals = valid.map(d => d.attendance);
-  const xMin  = Math.min(...xVals), xMax = Math.max(...xVals);
-  const regLine = [
-    { x: xMin, y: Math.round((reg.slope * xMin + reg.intercept) * 100) / 100 },
-    { x: xMax, y: Math.round((reg.slope * xMax + reg.intercept) * 100) / 100 }
+  const kpis = [
+    { label:'World Population', value: pop ? fmtBig(pop) : '—',
+      sub: getWorldYear('Population, total') || '', delta: delta(pop, popPrev), color:'#e8ff47' },
+    { label:'Life Expectancy', value: le ? le.toFixed(1)+' yrs' : '—',
+      sub:'global average', delta: delta(le, lePrev), color:'#4dffb4' },
+    { label:'Fertility Rate', value: fert ? fert.toFixed(2)+' births/woman' : '—',
+      sub:'global average', delta: delta(fert, fertPrev), color:'#47c8ff' },
+    { label:'Urban Population', value: urban ? urban.toFixed(1)+'%' : '—',
+      sub:'of total world population', delta:'', color:'#c084fc' },
+    { label:'Population Growth', value: grow ? grow.toFixed(3)+'%/yr' : '—',
+      sub:'annual rate', delta:'', color:'#fb923c' },
   ];
 
-  const cols = window.S2_COLS || {};
-  const xLabel = cols.secondaryCol || 'X';
-  const yLabel = cols.primaryCol   || 'Y';
-
-  const ctx = document.getElementById(canvasId).getContext('2d');
-  window.CHARTS[canvasId] = new Chart(ctx, {
-    type: 'scatter',
-    data: {
-      datasets: [
-        {
-          label: 'Data points',
-          data: points,
-          backgroundColor: 'rgba(71,200,255,0.7)',
-          borderColor:     '#47c8ff',
-          pointRadius:      5,
-          pointHoverRadius: 8,
-        },
-        {
-          label: 'Regression',
-          data: regLine,
-          type: 'line',
-          borderColor:  '#e8ff47',
-          borderWidth:   2,
-          borderDash:   [6, 4],
-          pointRadius:   0,
-          fill:          false,
-          tension:       0,
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      plugins: {
-        legend: { labels: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } } },
-        tooltip: {
-          backgroundColor: '#13151a',
-          titleColor: '#e8ff47',
-          bodyColor:  '#d8dde8',
-          titleFont: { family: "'Space Mono'" },
-          bodyFont:  { family: "'Space Mono'" },
-          filter: item => item.datasetIndex === 0,
-          callbacks: {
-            title: items => valid[items[0].dataIndex]?.name || '',
-            label: ctx  => ` ${yLabel}: ${ctx.parsed.y}  |  ${xLabel}: ${ctx.parsed.x}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          title: { display: true, text: xLabel, color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
-          ticks: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
-          grid:  { color: '#1f2230' }
-        },
-        y: {
-          title: { display: true, text: yLabel, color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
-          ticks: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
-          grid:  { color: '#1f2230' }
-        }
-      }
-    }
-  });
-  document.getElementById('scatterPlaceholder').style.display = 'none';
-  document.getElementById(canvasId).style.display = 'block';
+  document.getElementById('kpi-strip').innerHTML = kpis.map((k,i) => `
+    <div class="kpi-card" style="--kpi-color:${k.color}; animation-delay:${i*0.05}s">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+      ${k.delta}
+    </div>`).join('');
 }
 
-function drawDoughnut(canvasId, data) {
-  if (window.CHARTS[canvasId]) window.CHARTS[canvasId].destroy();
-  const ctx = document.getElementById(canvasId).getContext('2d');
-  const cols = window.S2_COLS || {};
+/* Chart.js shared dark-theme defaults */
+function wbChartDefaults(xLabel, yLabel) {
+  return {
+    responsive: true,
+    maintainAspectRatio: true,
+    interaction: { mode:'index', intersect:false },
+    plugins: {
+      legend: { display:false },
+      tooltip: {
+        backgroundColor:'#13151a', borderColor:'#1f2230', borderWidth:1,
+        titleColor:'#e8ff47', bodyColor:'#d8dde8',
+        titleFont:{ family:"'Space Mono'", size:11 },
+        bodyFont: { family:"'Space Mono'", size:11 },
+        padding:10,
+      }
+    },
+    scales: {
+      x: {
+        title: xLabel ? { display:true, text:xLabel, color:'#6b7494', font:{family:"'Space Mono'",size:10} } : undefined,
+        ticks: { color:'#6b7494', font:{family:"'Space Mono'",size:10}, maxTicksLimit:12 },
+        grid:  { color:'#1f2230' }
+      },
+      y: {
+        title: yLabel ? { display:true, text:yLabel, color:'#6b7494', font:{family:"'Space Mono'",size:10} } : undefined,
+        ticks: { color:'#6b7494', font:{family:"'Space Mono'",size:10},
+                 callback: v => fmtBig(v) },
+        grid:  { color:'#1f2230' }
+      }
+    }
+  };
+}
 
-  let labels, counts, colors;
+function renderWBCharts() {
+  const st = window.S2.wb;
+  const { lookup, selectedCountries, selectedSeries, yearCols, yearLabels, yearStart, yearEnd } = st;
+  if (!selectedCountries.length || !selectedSeries) return;
 
-  if (cols.isStudentMode && cols.gradeCol) {
-    // Student mode: A/B/C/D from actual grade column
-    const gc = { A: 0, B: 0, C: 0, D: 0 };
-    data.forEach(d => {
-      const g = d.grade?.toString().toUpperCase()[0];
-      if (gc[g] !== undefined) gc[g]++;
-    });
-    labels = ['A', 'B', 'C', 'D'];
-    counts = [gc.A, gc.B, gc.C, gc.D];
-    colors = ['#4dffb4','#47c8ff','#e8ff47','#ff4d6a'];
-  } else {
-    // Generic mode: bucket values into quartile bands (Q1/Q2/Q3/Q4)
-    const vals = data.map(d => d.score).sort((a, b) => a - b);
-    const n = vals.length;
-    const q1 = vals[Math.floor(n * 0.25)];
-    const q2 = vals[Math.floor(n * 0.50)];
-    const q3 = vals[Math.floor(n * 0.75)];
-    const bands = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
-    vals.forEach(v => {
-      if      (v <= q1) bands.Q1++;
-      else if (v <= q2) bands.Q2++;
-      else if (v <= q3) bands.Q3++;
-      else              bands.Q4++;
-    });
-    labels = [`≤${q1?.toFixed(1)} (Q1)`, `≤${q2?.toFixed(1)} (Q2)`, `≤${q3?.toFixed(1)} (Q3)`, `> Q3`];
-    counts = [bands.Q1, bands.Q2, bands.Q3, bands.Q4];
-    colors = ['#ff4d6a','#e8ff47','#47c8ff','#4dffb4'];
-  }
+  const seriesData = lookup[selectedSeries] || {};
+  const slicedYears = yearLabels.slice(yearStart, yearEnd + 1);
 
-  window.CHARTS[canvasId] = new Chart(ctx, {
-    type: 'doughnut',
+  // ── 1. MAIN: Multi-country time series line chart ──────────────
+  destroyChart('barChart');
+  const datasets = selectedCountries.map((code, i) => {
+    const raw = (seriesData[code] || []).slice(yearStart, yearEnd + 1);
+    const color = S2_PALETTE[i % S2_PALETTE.length];
+    return {
+      label: st.countryMap[code] || code,
+      data: raw.map(v => v),
+      borderColor: color,
+      backgroundColor: color + '18',
+      borderWidth: 2.5,
+      pointRadius: slicedYears.length > 30 ? 0 : 3,
+      pointHoverRadius: 5,
+      tension: 0.35,
+      fill: selectedCountries.length === 1,
+      spanGaps: true,
+    };
+  });
+
+  document.getElementById('barPlaceholder').style.display = 'none';
+  document.getElementById('barChart').style.display = 'block';
+
+  const mainOpts = wbChartDefaults('Year', selectedSeries);
+  mainOpts.plugins.legend.display = false; // we use custom legend
+  mainOpts.interaction = { mode:'index', intersect:false };
+  mainOpts.plugins.tooltip.callbacks = {
+    label: ctx => ` ${ctx.dataset.label}: ${fmtBig(ctx.parsed.y)}`
+  };
+
+  const ctx1 = document.getElementById('barChart').getContext('2d');
+  window.CHARTS['barChart'] = new Chart(ctx1, {
+    type: 'line',
+    data: { labels: slicedYears, datasets },
+    options: mainOpts,
+  });
+
+  // Update title
+  document.getElementById('main-chart-title').textContent = selectedSeries;
+  document.getElementById('main-chart-sub').textContent =
+    `${slicedYears[0]} – ${slicedYears[slicedYears.length-1]} · hover for values`;
+
+  // Custom legend
+  document.getElementById('main-chart-legend').innerHTML = datasets.map(ds => `
+    <span class="legend-item">
+      <span class="legend-line" style="background:${ds.borderColor}"></span>
+      ${esc(ds.label)}
+    </span>`).join('');
+
+  // ── 2. BOTTOM-LEFT: Latest-year bar chart (snapshot) ──────────
+  destroyChart('scatterChart');
+  const latestIdx = yearEnd;
+  const snapData = selectedCountries
+    .map((code, i) => ({ label: st.countryMap[code] || code, value: (seriesData[code]||[])[latestIdx], color: S2_PALETTE[i%S2_PALETTE.length] }))
+    .filter(d => d.value !== null && d.value !== undefined);
+
+  document.getElementById('scatterPlaceholder').style.display = 'none';
+  document.getElementById('scatterChart').style.display = 'block';
+  document.getElementById('scatter-title').textContent = `${yearLabels[yearEnd]} Snapshot`;
+  document.getElementById('scatter-sub').textContent = `Latest available value per country`;
+
+  const ctx2 = document.getElementById('scatterChart').getContext('2d');
+  const snapOpts = wbChartDefaults(null, selectedSeries);
+  snapOpts.indexAxis = 'y';
+  snapOpts.interaction = { mode:'index', intersect:true };
+  snapOpts.plugins.tooltip.callbacks = {
+    label: ctx => ` ${fmtBig(ctx.parsed.x)}`
+  };
+  snapOpts.scales.x.ticks.maxTicksLimit = 6;
+  snapOpts.scales.y.ticks.callback = undefined;
+  // Annotation: best country
+  window.CHARTS['scatterChart'] = new Chart(ctx2, {
+    type: 'bar',
     data: {
-      labels,
+      labels: snapData.map(d => d.label.length > 18 ? d.label.slice(0,16)+'…' : d.label),
       datasets: [{
-        data:            counts,
-        backgroundColor: colors,
-        borderColor:     '#0b0c0f',
-        borderWidth:      2,
+        data: snapData.map(d => d.value),
+        backgroundColor: snapData.map(d => d.color + 'cc'),
+        borderColor:     snapData.map(d => d.color),
+        borderWidth: 1, borderRadius: 4,
+      }]
+    },
+    options: snapOpts,
+  });
+
+  // ── 3. BOTTOM-RIGHT: Trend comparison doughnut ─────────────────
+  destroyChart('doughnutChart');
+  // Show share of latest value among selected countries
+  const total = snapData.reduce((s,d)=>s+(d.value||0),0);
+  const hasShare = total > 0 && snapData.length > 1;
+
+  document.getElementById('doughnutPlaceholder').style.display = 'none';
+  document.getElementById('doughnutChart').style.display = 'block';
+  document.getElementById('doughnut-title').textContent = hasShare ? `Share of Total` : `Value Distribution`;
+  document.getElementById('doughnut-sub').textContent = `${yearLabels[yearEnd]} · selected countries`;
+
+  const ctx3 = document.getElementById('doughnutChart').getContext('2d');
+  window.CHARTS['doughnutChart'] = new Chart(ctx3, {
+    type: hasShare ? 'doughnut' : 'bar',
+    data: {
+      labels: snapData.map(d => d.label),
+      datasets: [{
+        data: snapData.map(d => d.value),
+        backgroundColor: snapData.map(d => d.color + 'cc'),
+        borderColor:     snapData.map(d => d.color),
+        borderWidth: 2,
+        ...(hasShare ? { cutout:'58%' } : { borderRadius:4 }),
       }]
     },
     options: {
-      cutout: '60%',
-      responsive: true,
-      maintainAspectRatio: true,
+      responsive:true, maintainAspectRatio:true,
       plugins: {
-        legend: { labels: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } } },
+        legend: { labels:{ color:'#6b7494', font:{family:"'Space Mono'",size:10}, boxWidth:10 } },
         tooltip: {
-          backgroundColor: '#13151a',
-          titleColor: '#e8ff47',
-          bodyColor:  '#d8dde8',
-          titleFont: { family: "'Space Mono'" },
-          bodyFont:  { family: "'Space Mono'" },
+          backgroundColor:'#13151a', borderColor:'#1f2230', borderWidth:1,
+          titleColor:'#e8ff47', bodyColor:'#d8dde8',
+          titleFont:{family:"'Space Mono'",size:11}, bodyFont:{family:"'Space Mono'",size:11},
           callbacks: {
             label: ctx => {
-              const pct = ((ctx.parsed / data.length) * 100).toFixed(1);
-              return ` ${ctx.label}: ${ctx.parsed} rows (${pct}%)`;
+              const v = ctx.parsed ?? ctx.raw;
+              const val = hasShare ? ctx.parsed : ctx.parsed.y ?? ctx.parsed;
+              const pct = total > 0 ? ((ctx.parsed/total)*100).toFixed(1)+'%' : '';
+              return ` ${fmtBig(ctx.parsed)}${hasShare ? ' ('+pct+')' : ''}`;
             }
           }
         }
+      },
+      cutout: hasShare ? '58%' : undefined,
+      ...(hasShare ? {} : { scales: { x:{ ticks:{color:'#6b7494', font:{family:"'Space Mono'",size:10}}, grid:{color:'#1f2230'} }, y:{ ticks:{color:'#6b7494', font:{family:"'Space Mono'",size:10}, callback:v=>fmtBig(v)}, grid:{color:'#1f2230'} } } })
+    }
+  });
+}
+
+function renderWBAnalysis() {
+  const st = window.S2.wb;
+  const { lookup, selectedCountries, selectedSeries, yearCols, yearLabels, yearStart, yearEnd } = st;
+  if (!selectedCountries.length) return;
+
+  const seriesData = lookup[selectedSeries] || {};
+
+  // Flatten values of first country in selected range
+  const code0 = selectedCountries[0];
+  const vals0 = (seriesData[code0] || []).slice(yearStart, yearEnd+1).filter(v => v !== null && isFinite(v));
+
+  const minV = vals0.length ? Math.min(...vals0) : 0;
+  const maxV = vals0.length ? Math.max(...vals0) : 0;
+  const varV = variance(vals0);
+  const sdV  = stdDev(vals0);
+
+  document.getElementById('an').textContent       = vals0.length;
+  document.getElementById('aMin').textContent      = fmtStat(minV);
+  document.getElementById('aMax').textContent      = fmtStat(maxV);
+  document.getElementById('aRange').textContent    = fmtStat(maxV - minV);
+  document.getElementById('aVariance').textContent = fmtStat(varV);
+  document.getElementById('aStdDev').textContent   = fmtStat(sdV);
+  const descTitle = document.getElementById('desc-tile-title');
+  if (descTitle) descTitle.textContent = `Stats · ${st.countryMap[code0]||code0}`;
+  const kMin = document.getElementById('k-min'); if(kMin) kMin.textContent = `Min (${yearLabels[yearStart]})`;
+  const kMax = document.getElementById('k-max'); if(kMax) kMax.textContent = `Max (${yearLabels[yearStart]}–${yearLabels[yearEnd]})`;
+
+  // Correlation: year index vs value (trend direction)
+  if (vals0.length >= 3) {
+    const xs = vals0.map((_,i) => i);
+    const r1 = pearsonCorr(xs, vals0);
+    const reg = linearRegression(xs, vals0);
+    const r2 = vals0.length > 1 ? pearsonCorr(vals0.slice(0,-1), vals0.slice(1)) : 0;
+
+    const kR1 = document.getElementById('k-r1'); if(kR1) kR1.textContent = 'Trend r (year→value)';
+    const kR2 = document.getElementById('k-r2'); if(kR2) kR2.textContent = 'Autocorr (lag-1)';
+    document.getElementById('rPearson').textContent  = r1.toFixed(4);
+    document.getElementById('rInterp').textContent   = interpCorr(r1);
+    document.getElementById('rPearson2').textContent = r2.toFixed(4);
+    document.getElementById('rInterp2').textContent  = interpCorr(r2);
+    document.getElementById('rStronger').textContent = Math.abs(r1) > 0.5 ? 'Time trend' : 'No strong trend';
+    document.getElementById('rDirection').textContent = r1 > 0 ? 'Upward over time' : 'Downward over time';
+
+    document.getElementById('regEquation').textContent  = `y = ${reg.slope.toFixed(4)}·t + ${reg.intercept.toFixed(2)}`;
+    document.getElementById('regSlope').textContent     = reg.slope.toFixed(4);
+    document.getElementById('regIntercept').textContent = fmtStat(reg.intercept);
+    document.getElementById('regR2').textContent        = reg.rSquared.toFixed(4);
+    document.getElementById('regInterp').textContent    = reg.rSquared >= 0.9 ? 'Excellent fit' : reg.rSquared >= 0.7 ? 'Good fit' : 'Moderate fit';
+    const midT = Math.round(vals0.length / 2);
+    document.getElementById('regPredict').textContent   = fmtStat(reg.slope * midT + reg.intercept) + ` (t=${midT})`;
+    const kPred = document.getElementById('k-predict'); if(kPred) kPred.textContent = 'Predicted @midpoint';
+  }
+}
+
+function renderWBInsights() {
+  const st = window.S2.wb;
+  const { lookup, selectedCountries, selectedSeries, yearLabels, yearStart, yearEnd } = st;
+  if (!selectedCountries.length) return;
+
+  const seriesData = lookup[selectedSeries] || {};
+  const latest = yearLabels[yearEnd];
+  const earliest = yearLabels[yearStart];
+
+  // Per-country change summary
+  const summaries = selectedCountries.slice(0,5).map((code, i) => {
+    const arr  = (seriesData[code] || []).slice(yearStart, yearEnd+1);
+    const start = arr.find(v => v !== null);
+    const end   = [...arr].reverse().find(v => v !== null);
+    if (start == null || end == null) return null;
+    const change = end - start;
+    const pct    = ((change / Math.abs(start)) * 100).toFixed(1);
+    const dir    = change >= 0 ? 'increased' : 'decreased';
+    const color  = S2_PALETTE[i % S2_PALETTE.length];
+    return `<span style="color:${color}">${esc(st.countryMap[code]||code)}</span>: `+
+      `${dir} from <strong>${fmtBig(start)}</strong> to <strong>${fmtBig(end)}</strong> `+
+      `(${change>=0?'+':''}${fmtBig(change)}, ${change>=0?'+':''}${pct}%)`;
+  }).filter(Boolean);
+
+  const worldVal = (() => {
+    const d = lookup[selectedSeries];
+    if (!d || !d['WLD']) return null;
+    return [...(d['WLD']||[])].reverse().find(v => v !== null);
+  })();
+
+  let html = `<p class="insight-text">`;
+  html += `<strong>${esc(selectedSeries)}</strong> trends from `;
+  html += `<span class="highlight">${earliest}</span> to <span class="highlight">${latest}</span>`;
+  if (worldVal !== null) html += ` · World: <span class="highlight">${fmtBig(worldVal)}</span>`;
+  html += `.<br><br>`;
+  if (summaries.length) {
+    html += summaries.join('<br>');
+  }
+  // Quick insight for well-known series
+  if (selectedSeries.includes('Life expectancy')) {
+    html += `<br><br><em style="color:var(--muted)">Life expectancy has risen globally due to improvements in medicine, sanitation, and nutrition.</em>`;
+  } else if (selectedSeries.includes('Fertility')) {
+    html += `<br><br><em style="color:var(--muted)">Fertility rates have declined in most countries as education levels and urbanization increased.</em>`;
+  } else if (selectedSeries.includes('Urban')) {
+    html += `<br><br><em style="color:var(--muted)">Urbanization continues globally — over half the world's population now lives in cities.</em>`;
+  } else if (selectedSeries.includes('Population, total')) {
+    html += `<br><br><em style="color:var(--muted)">World population growth has been slowing since its 1960s peak, but absolute numbers continue to rise.</em>`;
+  }
+  html += `</p>`;
+
+  document.getElementById('insightsBody').innerHTML = html;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GENERIC CSV MODE (student dataset + any other CSV)
+═══════════════════════════════════════════════════════════════════ */
+
+function initGeneric(rows, headers) {
+  document.getElementById('wb-controls').style.display = 'none';
+  document.getElementById('s2-section-title').textContent = 'Data Insights';
+
+  function isNumericCol(col) {
+    const s = rows.slice(0,200).map(r=>r[col]).filter(v=>v!==null&&v!==undefined&&v!=='');
+    return s.length > 0 && s.filter(v=>typeof v==='number'&&isFinite(v)).length/s.length > 0.5;
+  }
+  function isStringCol(col) {
+    const s = rows.slice(0,50).map(r=>r[col]).filter(v=>v!==null&&v!==undefined&&v!=='');
+    return s.length > 0 && s.filter(v=>typeof v==='string'&&v.trim()!=='').length/s.length > 0.6;
+  }
+  const numCols = headers.filter(isNumericCol);
+  const strCols = headers.filter(isStringCol);
+  if (!numCols.length) return;
+
+  const lower = headers.map(h=>({h, l:h.toLowerCase()}));
+  const find = (...hints) => { for(const hint of hints){ const m=lower.find(({l})=>numCols.map(x=>x.toLowerCase()).includes(l) && l.includes(hint)); if(m) return m.h; } return null; };
+  const scoreCol  = lower.find(({l})=>l.includes('score')||l.includes('final')||l.includes('mark'))?.h || numCols[0];
+  const studyCol  = lower.find(({l})=>l.includes('study')||l.includes('hour')||l.includes('hrs'))?.h  || numCols[1]||numCols[0];
+  const attendCol = lower.find(({l})=>l.includes('attend'))?.h || numCols[2]||numCols[0];
+  const gradeCol  = lower.find(({l})=>l==='grade'||l==='letter')?.h || null;
+  const nameCol   = lower.find(({l})=>l.includes('name')||l.includes('student'))?.h || strCols[0]||headers[0];
+
+  const adapted = rows.map(r => ({
+    name: String(r[nameCol]??'').trim()||'(no name)',
+    score: +r[scoreCol]||0, studyHours: +r[studyCol]||0,
+    attendance: +r[attendCol]||0,
+    grade: gradeCol ? String(r[gradeCol]||'').toUpperCase()[0] : deriveGrade(+r[scoreCol]||0),
+    job: false,
+  })).filter(r => isFinite(r.score));
+
+  window.S2_DATA = adapted;
+  window.S2_COLS = { scoreCol, studyCol, attendCol, gradeCol, nameCol, isStudentMode: true };
+
+  // KPI strip
+  const scores = adapted.map(d=>d.score);
+  const passRate = Math.round(adapted.filter(d=>d.score>=60).length/adapted.length*100);
+  const kpis = [
+    { label:'Students', value:adapted.length, sub:'total records', color:'#e8ff47' },
+    { label:'Mean Score', value:s2Mean(scores).toFixed(1), sub:'out of 100', color:'#4dffb4' },
+    { label:'Pass Rate', value:passRate+'%', sub:'score ≥ 60', color: passRate>=75?'#4dffb4':passRate>=50?'#e8ff47':'#ff4d6a' },
+    { label:'Top Score', value:Math.max(...scores), sub:adapted.sort((a,b)=>b.score-a.score)[0]?.name||'', color:'#47c8ff' },
+    { label:'Avg Study Hrs', value:s2Mean(adapted.map(d=>d.studyHours)).toFixed(1), sub:'hrs/week', color:'#c084fc' },
+  ];
+  document.getElementById('kpi-strip').innerHTML = kpis.map((k,i)=>`
+    <div class="kpi-card" style="--kpi-color:${k.color};animation-delay:${i*0.05}s">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+
+  document.getElementById('main-chart-title').textContent = 'Top 10 — Final Scores';
+  document.getElementById('main-chart-sub').textContent   = 'Sorted descending · hover for detail';
+  document.getElementById('scatter-title').textContent    = 'Attendance vs Score';
+  document.getElementById('scatter-sub').textContent      = 'With regression line overlay';
+  document.getElementById('doughnut-title').textContent   = 'Grade Distribution';
+  document.getElementById('doughnut-sub').textContent     = 'A / B / C / D breakdown';
+
+  drawBarChart('barChart', adapted);
+  drawScatterPlot('scatterChart', adapted);
+  drawDoughnut('doughnutChart', adapted);
+  renderAnalysis(adapted, scoreCol, studyCol, attendCol, true);
+  renderInsights(adapted, scoreCol, studyCol, attendCol, true);
+}
+
+function deriveGrade(score) {
+  if (score>=90) return 'A'; if (score>=75) return 'B'; if (score>=60) return 'C'; return 'D';
+}
+
+/* ── STUDENT CHART FUNCTIONS ──────────────────────────────────── */
+function drawBarChart(canvasId, data) {
+  const top10 = [...data].sort((a,b)=>b.score-a.score).slice(0,10);
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  window.CHARTS[canvasId] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:top10.map(d=>d.name.length>22?d.name.slice(0,20)+'…':d.name),
+      datasets:[{ label:'Score', data:top10.map(d=>d.score),
+        backgroundColor:'rgba(232,255,71,0.75)', borderColor:'rgba(232,255,71,1)',
+        borderWidth:1, borderRadius:4 }] },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      indexAxis:'y',
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#13151a', borderColor:'#1f2230', borderWidth:1,
+          titleColor:'#e8ff47', bodyColor:'#d8dde8',
+          titleFont:{family:"'Space Mono'",size:11}, bodyFont:{family:"'Space Mono'",size:11},
+          padding:10,
+          callbacks:{
+            title:items=>`#${items[0].dataIndex+1} — ${top10[items[0].dataIndex]?.name||''}`,
+            label:c=>` Score: ${c.parsed.x}  (Grade ${deriveGrade(c.parsed.x)})`
+          }
+        }
+      },
+      scales:{
+        x:{
+          min:0, max:100,
+          title:{ display:true, text:'Final Score', color:'#6b7494', font:{family:"'Space Mono'",size:10} },
+          ticks:{color:'#6b7494',font:{family:"'Space Mono'",size:10}},
+          grid:{color:'#1f2230'}
+        },
+        y:{
+          ticks:{color:'#d8dde8',font:{family:"'Space Mono'",size:11}},
+          grid:{color:'rgba(31,34,48,0.5)'}
+        }
       }
     }
   });
-  document.getElementById('doughnutPlaceholder').style.display = 'none';
-  document.getElementById(canvasId).style.display = 'block';
+  document.getElementById('barPlaceholder').style.display='none';
+  document.getElementById(canvasId).style.display='block';
 }
 
-/* ── PART B: STATISTICAL ANALYSIS FUNCTIONS ─────────────────── */
+function drawScatterPlot(canvasId, data) {
+  const valid = data.filter(d=>isFinite(d.attendance)&&isFinite(d.score));
+  if (!valid.length) { document.getElementById('scatterPlaceholder').textContent='No valid data.'; return; }
+  destroyChart(canvasId);
+  const reg = linearRegression(valid.map(d=>d.attendance), valid.map(d=>d.score));
+  const xv = valid.map(d=>d.attendance);
+  const xMin=Math.min(...xv), xMax=Math.max(...xv);
+  const regLine=[{x:xMin,y:reg.slope*xMin+reg.intercept},{x:xMax,y:reg.slope*xMax+reg.intercept}];
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  window.CHARTS[canvasId] = new Chart(ctx,{
+    type:'scatter',
+    data:{ datasets:[
+      { label:'Students', data:valid.map(d=>({x:d.attendance,y:d.score,name:d.name})),
+        backgroundColor:'rgba(71,200,255,0.65)', borderColor:'#47c8ff',
+        pointRadius:5, pointHoverRadius:8, pointBorderWidth:1, pointBorderColor:'rgba(71,200,255,0.9)' },
+      { label:`Regression (R²=${reg.rSquared})`, data:regLine, type:'line',
+        borderColor:'#e8ff47', borderWidth:2,
+        borderDash:[6,4], pointRadius:0, fill:false, tension:0, spanGaps:true }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{
+        legend:{ labels:{color:'#6b7494',font:{family:"'Space Mono'",size:10},
+          generateLabels(chart) {
+            return chart.data.datasets.map((ds,i) => ({
+              text: ds.label, fillStyle: ds.borderColor,
+              strokeStyle: ds.borderColor, lineWidth: i===1 ? 2 : 0,
+              hidden: false, index: i,
+              pointStyle: i===0 ? 'circle' : 'line',
+            }));
+          }
+        }},
+        tooltip:{
+          backgroundColor:'#13151a', borderColor:'#1f2230', borderWidth:1,
+          titleColor:'#e8ff47', bodyColor:'#d8dde8',
+          titleFont:{family:"'Space Mono'",size:11}, bodyFont:{family:"'Space Mono'",size:11},
+          padding:10,
+          filter:item=>item.datasetIndex===0,
+          callbacks:{
+            title:items=>{ const pt=valid[items[0].dataIndex]; return pt?.name||'Student'; },
+            label:c=>` Score: ${c.parsed.y}  |  Attendance: ${c.parsed.x}%`
+          }
+        }
+      },
+      scales:{
+        x:{
+          title:{display:true,text:'Attendance (%)',color:'#6b7494',font:{family:"'Space Mono'",size:10}},
+          min:0, max:100,
+          ticks:{color:'#6b7494',font:{family:"'Space Mono'",size:10}},
+          grid:{color:'#1f2230'}
+        },
+        y:{
+          title:{display:true,text:'Final Score',color:'#6b7494',font:{family:"'Space Mono'",size:10}},
+          min:0, max:100,
+          ticks:{color:'#6b7494',font:{family:"'Space Mono'",size:10}},
+          grid:{color:'#1f2230'}
+        }
+      }
+    }
+  });
+  document.getElementById('scatterPlaceholder').style.display='none';
+  document.getElementById(canvasId).style.display='block';
+  // Update subtitle with point count and R²
+  document.getElementById('scatter-sub').textContent =
+    `${valid.length} students · R²=${reg.rSquared} · r=${pearsonCorr(valid.map(d=>d.attendance),valid.map(d=>d.score)).toFixed(3)}`;
+}
 
+function drawDoughnut(canvasId, data) {
+  destroyChart(canvasId);
+  const gc={A:0,B:0,C:0,D:0};
+  data.forEach(d=>{ const g=d.grade?.toString().toUpperCase()[0]; if(gc[g]!==undefined) gc[g]++; });
+  const total = data.length;
+  const grades = ['A','B','C','D'];
+  const colors = ['#4dffb4','#47c8ff','#e8ff47','#ff4d6a'];
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  window.CHARTS[canvasId] = new Chart(ctx,{
+    type:'doughnut',
+    data:{ labels:grades.map(g=>`${g} (${gc[g]})`), datasets:[{
+      data:[gc.A,gc.B,gc.C,gc.D], backgroundColor:colors.map(c=>c+'cc'),
+      borderColor:colors, borderWidth:2, hoverBorderWidth:3,
+      hoverOffset:6 }] },
+    options:{
+      cutout:'62%', responsive:true, maintainAspectRatio:true,
+      animation:{ animateRotate:true, animateScale:true },
+      plugins:{
+        legend:{
+          position:'bottom',
+          labels:{color:'#d8dde8',font:{family:"'Space Mono'",size:10},
+            padding:16, boxWidth:12, usePointStyle:true, pointStyle:'circle'}
+        },
+        tooltip:{
+          backgroundColor:'#13151a', borderColor:'#1f2230', borderWidth:1,
+          titleColor:'#e8ff47', bodyColor:'#d8dde8',
+          titleFont:{family:"'Space Mono'",size:11}, bodyFont:{family:"'Space Mono'",size:11},
+          padding:10,
+          callbacks:{
+            title:items=>`Grade ${grades[items[0].dataIndex]}`,
+            label:c=>` ${c.raw} students — ${((c.raw/total)*100).toFixed(1)}%`
+          }
+        }
+      }
+    }
+  });
+  document.getElementById('doughnutPlaceholder').style.display='none';
+  document.getElementById(canvasId).style.display='block';
+  document.getElementById('doughnut-sub').textContent = `${total} students · A/B/C/D breakdown`;
+}
+
+/* ── STATS FUNCTIONS ──────────────────────────────────────────── */
 function variance(arr) {
-  const clean = arr.filter(v => typeof v === 'number' && isFinite(v));
-  if (!clean.length) return 0;
-  const mu    = s2Mean(clean);
-  const sumSq = clean.reduce((s, x) => s + (x - mu) ** 2, 0);
-  return Math.round((sumSq / clean.length) * 100) / 100;
+  const c=arr.filter(v=>typeof v==='number'&&isFinite(v));
+  if(!c.length) return 0;
+  const mu=s2Mean(c);
+  return Math.round((c.reduce((s,x)=>s+(x-mu)**2,0)/c.length)*100)/100;
+}
+function stdDev(arr) { return Math.round(Math.sqrt(variance(arr))*100)/100; }
+function pearsonCorr(x,y) {
+  const pairs=x.map((v,i)=>[v,y[i]]).filter(([a,b])=>typeof a==='number'&&isFinite(a)&&typeof b==='number'&&isFinite(b));
+  if(pairs.length<2) return 0;
+  const px=pairs.map(p=>p[0]),py=pairs.map(p=>p[1]);
+  const mx=s2Mean(px),my=s2Mean(py);
+  let num=0,dX=0,dY=0;
+  for(const [a,b] of pairs){ const dx=a-mx,dy=b-my; num+=dx*dy; dX+=dx*dx; dY+=dy*dy; }
+  const d=Math.sqrt(dX*dY); if(!d) return 0;
+  return Math.round((num/d)*10000)/10000;
+}
+function linearRegression(x,y) {
+  const pairs=x.map((v,i)=>[v,y[i]]).filter(([a,b])=>typeof a==='number'&&isFinite(a)&&typeof b==='number'&&isFinite(b));
+  if(pairs.length<2) return{slope:0,intercept:0,rSquared:0};
+  const px=pairs.map(p=>p[0]),py=pairs.map(p=>p[1]);
+  const mx=s2Mean(px),my=s2Mean(py);
+  let num=0,den=0;
+  for(const [a,b] of pairs){ num+=(a-mx)*(b-my); den+=(a-mx)**2; }
+  if(!den) return{slope:0,intercept:Math.round(my*10000)/10000,rSquared:0};
+  const slope=Math.round((num/den)*10000)/10000;
+  const intercept=Math.round((my-slope*mx)*10000)/10000;
+  const r=pearsonCorr(px,py);
+  return{slope,intercept,rSquared:Math.round(r**2*10000)/10000};
+}
+function interpCorr(r) {
+  const s=Math.abs(r)>=0.7?'Strong':Math.abs(r)>=0.4?'Moderate':'Weak';
+  return `${s} ${r>0?'Positive':'Negative'}`;
 }
 
-function stdDev(arr) {
-  return Math.round(Math.sqrt(variance(arr)) * 100) / 100;
-}
-
-function pearsonCorr(x, y) {
-  // Filter to pairs where both are finite numbers
-  const pairs = x.map((v, i) => [v, y[i]])
-                  .filter(([a, b]) => typeof a === 'number' && isFinite(a) &&
-                                      typeof b === 'number' && isFinite(b));
-  if (pairs.length < 2) return 0;
-  const px = pairs.map(p => p[0]), py = pairs.map(p => p[1]);
-  const mx = s2Mean(px), my = s2Mean(py);
-  let num = 0, denomX = 0, denomY = 0;
-  for (const [a, b] of pairs) {
-    const dx = a - mx, dy = b - my;
-    num    += dx * dy;
-    denomX += dx * dx;
-    denomY += dy * dy;
-  }
-  const denom = Math.sqrt(denomX * denomY);
-  if (denom === 0) return 0;
-  return Math.round((num / denom) * 10000) / 10000;
-}
-
-function linearRegression(x, y) {
-  const pairs = x.map((v, i) => [v, y[i]])
-                  .filter(([a, b]) => typeof a === 'number' && isFinite(a) &&
-                                      typeof b === 'number' && isFinite(b));
-  if (pairs.length < 2) return { slope: 0, intercept: 0, rSquared: 0 };
-  const px = pairs.map(p => p[0]), py = pairs.map(p => p[1]);
-  const mx = s2Mean(px), my = s2Mean(py);
-  let num = 0, denom = 0;
-  for (const [a, b] of pairs) {
-    num   += (a - mx) * (b - my);
-    denom += (a - mx) ** 2;
-  }
-  if (denom === 0) return { slope: 0, intercept: Math.round(my * 10000) / 10000, rSquared: 0 };
-  const slope     = Math.round((num / denom) * 10000) / 10000;
-  const intercept = Math.round((my - slope * mx) * 10000) / 10000;
-  const r         = pearsonCorr(px, py);
-  const rSquared  = Math.round(r ** 2 * 10000) / 10000;
-  return { slope, intercept, rSquared };
-}
-
-function fmtStat(n) {
-  if (!isFinite(n)) return '—';
-  if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2) + 'B';
-  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(2) + 'M';
-  if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(2) + 'K';
-  return n.toFixed ? n.toFixed(2) : String(n);
-}
-
+/* ── STUDENT ANALYSIS / INSIGHTS ─────────────────────────────── */
 function renderAnalysis(data, primaryCol, studyCol, attendCol, isStudentMode) {
-  const scores  = data.map(d => d.score);
-  const hours   = data.map(d => d.studyHours);
-  const attend  = data.map(d => d.attendance);
-
-  const finiteScores = scores.filter(v => isFinite(v));
-  const minScore = finiteScores.length ? Math.min(...finiteScores) : 0;
-  const maxScore = finiteScores.length ? Math.max(...finiteScores) : 0;
-
-  document.getElementById('an').textContent        = data.length;
-  document.getElementById('aMin').textContent      = fmtStat(minScore);
-  document.getElementById('aMax').textContent      = fmtStat(maxScore);
-  document.getElementById('aRange').textContent    = fmtStat(maxScore - minScore);
-  document.getElementById('aVariance').textContent = fmtStat(variance(finiteScores));
-  document.getElementById('aStdDev').textContent   = fmtStat(stdDev(finiteScores));
-
-  // Update tile heading for non-student mode
-  const descTile = document.querySelector('.analysis-tile:nth-child(1) h4');
-  if (descTile) descTile.textContent = isStudentMode
-    ? 'Descriptive Statistics'
-    : `Stats · ${primaryCol || 'Primary Col'}`;
-
-  const r1 = pearsonCorr(hours.filter((_,i)  => isFinite(hours[i]) && hours[i] !== 0),
-                          scores.filter((_,i) => isFinite(hours[i]) && hours[i] !== 0));
-  const r2 = pearsonCorr(attend.filter((_,i)  => isFinite(attend[i]) && attend[i] !== 0),
-                          scores.filter((_,i) => isFinite(attend[i]) && attend[i] !== 0));
-
-  // Recompute properly (zip-filter together)
-  const r1c = pearsonCorr(
-    data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0).map(d => d.studyHours),
-    data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0).map(d => d.score)
-  );
-  const r2c = pearsonCorr(
-    data.filter(d => isFinite(d.attendance) && d.attendance !== 0).map(d => d.attendance),
-    data.filter(d => isFinite(d.attendance) && d.attendance !== 0).map(d => d.score)
-  );
-
-  function interpCorr(r) {
-    const strength  = Math.abs(r) >= 0.7 ? 'Strong' : Math.abs(r) >= 0.4 ? 'Moderate' : 'Weak';
-    const direction = r > 0 ? 'Positive' : 'Negative';
-    return `${strength} ${direction}`;
-  }
-
-  const col2Label = isStudentMode ? 'Study Hours' : (studyCol  || 'Col 2');
-  const col3Label = isStudentMode ? 'Attendance'  : (attendCol || 'Col 3');
-
-  const corrTile = document.querySelector('.analysis-tile:nth-child(2) h4');
-  if (corrTile) corrTile.textContent = 'Correlation Analysis';
-  const kLabels = document.querySelectorAll('.analysis-tile:nth-child(2) .kv-list .k');
-  if (kLabels[0]) kLabels[0].textContent = `Pearson r (${col2Label}→primary)`;
-  if (kLabels[2]) kLabels[2].textContent = `Pearson r (${col3Label}→primary)`;
-
-  document.getElementById('rPearson').textContent  = r1c;
-  document.getElementById('rInterp').textContent   = interpCorr(r1c);
-  document.getElementById('rPearson2').textContent = r2c;
-  document.getElementById('rInterp2').textContent  = interpCorr(r2c);
-  document.getElementById('rStronger').textContent = Math.abs(r1c) >= Math.abs(r2c) ? col2Label : col3Label;
-  const bothPos = r1c > 0 && r2c > 0, bothNeg = r1c < 0 && r2c < 0;
-  document.getElementById('rDirection').textContent = bothPos ? 'Both positive' : bothNeg ? 'Both negative' : 'Mixed';
-
-  // Regression: tertiary col → primary
-  const regPairs = data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0);
-  const reg = linearRegression(regPairs.map(d => d.studyHours), regPairs.map(d => d.score));
-  const midX = s2Mean(regPairs.map(d => d.studyHours));
-  const predictAt = Math.round(midX);
-
-  document.getElementById('regEquation').textContent  = `y = ${reg.slope}·x + ${reg.intercept}`;
-  document.getElementById('regSlope').textContent     = reg.slope;
-  document.getElementById('regIntercept').textContent = reg.intercept;
-  document.getElementById('regR2').textContent        = reg.rSquared;
-  document.getElementById('regInterp').textContent    =
-    reg.rSquared >= 0.9 ? 'Excellent fit' : reg.rSquared >= 0.7 ? 'Good fit' : 'Moderate fit';
-  document.getElementById('regPredict').textContent   =
-    fmtStat(reg.slope * predictAt + reg.intercept) + ` (x=${predictAt})`;
-
-  const regKLabels = document.querySelectorAll('.analysis-tile:nth-child(3) .kv-list .k');
-  if (regKLabels[5]) regKLabels[5].textContent = `Predicted @mean x`;
+  const scores=data.map(d=>d.score).filter(isFinite);
+  document.getElementById('an').textContent       = data.length;
+  document.getElementById('aMin').textContent     = fmtStat(Math.min(...scores));
+  document.getElementById('aMax').textContent     = fmtStat(Math.max(...scores));
+  document.getElementById('aRange').textContent   = fmtStat(Math.max(...scores)-Math.min(...scores));
+  document.getElementById('aVariance').textContent= fmtStat(variance(scores));
+  document.getElementById('aStdDev').textContent  = fmtStat(stdDev(scores));
+  const kMin=document.getElementById('k-min'); if(kMin) kMin.textContent='Min score';
+  const kMax=document.getElementById('k-max'); if(kMax) kMax.textContent='Max score';
+  const r1=pearsonCorr(data.filter(d=>d.studyHours).map(d=>d.studyHours),data.filter(d=>d.studyHours).map(d=>d.score));
+  const r2=pearsonCorr(data.filter(d=>d.attendance).map(d=>d.attendance),data.filter(d=>d.attendance).map(d=>d.score));
+  const kR1=document.getElementById('k-r1'); if(kR1) kR1.textContent=`r (study hrs→score)`;
+  const kR2=document.getElementById('k-r2'); if(kR2) kR2.textContent=`r (attendance→score)`;
+  document.getElementById('rPearson').textContent =r1.toFixed(4);
+  document.getElementById('rInterp').textContent  =interpCorr(r1);
+  document.getElementById('rPearson2').textContent=r2.toFixed(4);
+  document.getElementById('rInterp2').textContent =interpCorr(r2);
+  document.getElementById('rStronger').textContent=Math.abs(r1)>=Math.abs(r2)?'Study Hours':'Attendance';
+  document.getElementById('rDirection').textContent=r1>0&&r2>0?'Both positive':r1<0&&r2<0?'Both negative':'Mixed';
+  const rp=data.filter(d=>d.studyHours);
+  const reg=linearRegression(rp.map(d=>d.studyHours),rp.map(d=>d.score));
+  document.getElementById('regEquation').textContent =`score = ${reg.slope}·hrs + ${reg.intercept}`;
+  document.getElementById('regSlope').textContent    =reg.slope;
+  document.getElementById('regIntercept').textContent=reg.intercept;
+  document.getElementById('regR2').textContent       =reg.rSquared;
+  document.getElementById('regInterp').textContent   =reg.rSquared>=0.9?'Excellent fit':reg.rSquared>=0.7?'Good fit':'Moderate fit';
+  document.getElementById('regPredict').textContent  =fmtStat(reg.slope*15+reg.intercept);
+  const kPred=document.getElementById('k-predict'); if(kPred) kPred.textContent='Predicted @15 hrs';
 }
 
-function renderInsights(data, primaryCol, studyCol, attendCol, isStudentMode) {
-  const scores  = data.map(d => d.score).filter(isFinite);
-  const meanScore = s2Mean(scores);
-  const minScore  = Math.min(...scores);
-  const maxScore  = Math.max(...scores);
-
-  const r1 = pearsonCorr(
-    data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0).map(d => d.studyHours),
-    data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0).map(d => d.score)
-  );
-  const r2 = pearsonCorr(
-    data.filter(d => isFinite(d.attendance) && d.attendance !== 0).map(d => d.attendance),
-    data.filter(d => isFinite(d.attendance) && d.attendance !== 0).map(d => d.score)
-  );
-  const col2Label = isStudentMode ? 'study hours' : (studyCol  || 'secondary column');
-  const col3Label = isStudentMode ? 'attendance'  : (attendCol || 'tertiary column');
-  const stronger  = Math.abs(r1) >= Math.abs(r2) ? col2Label : col3Label;
-  const strongerR = Math.abs(r1) >= Math.abs(r2) ? r1 : r2;
-
-  const regPairs = data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0);
-  const reg = linearRegression(regPairs.map(d => d.studyHours), regPairs.map(d => d.score));
-  const midX      = s2Mean(regPairs.map(d => d.studyHours));
-  const predictAt = Math.round(midX);
-  const predicted = fmtStat(reg.slope * predictAt + reg.intercept);
-
-  const passRate = isStudentMode
-    ? Math.round((data.filter(d => d.score >= 60).length / data.length) * 100)
-    : null;
-
-  const pCol = primaryCol || 'primary column';
-
-  let narrative = `
-    <strong>${data.length.toLocaleString()}</strong> records loaded.
-    The <span class="highlight">${pCol}</span> column ranges from
-    <span class="highlight">${fmtStat(minScore)}</span> to
-    <span class="highlight">${fmtStat(maxScore)}</span>
-    (mean: <span class="highlight">${fmtStat(meanScore)}</span>,
-    σ = <span class="highlight">${fmtStat(stdDev(scores))}</span>).`;
-
-  if (passRate !== null) {
-    narrative += `
-    Pass rate (score ≥ 60): <span class="highlight">${passRate}%</span>.`;
-  }
-
-  if (isFinite(strongerR) && strongerR !== 0) {
-    narrative += `
-    Of the two secondary predictors, <span class="highlight">${stronger}</span>
-    has the stronger Pearson correlation with <span class="highlight">${pCol}</span>
-    (r = <span class="highlight">${strongerR}</span>).`;
-  }
-
-  if (isFinite(reg.rSquared) && reg.rSquared > 0) {
-    narrative += `
-    The linear regression model (R² = <span class="highlight">${reg.rSquared}</span>)
-    predicts <span class="highlight">${predicted}</span>
-    for the mean input value of <span class="highlight">${fmtStat(midX)}</span>.`;
-  }
-
-  document.getElementById('insightsBody').innerHTML = `<p class="insight-text">${narrative}</p>`;
+function renderInsights(data, primaryCol) {
+  const scores=data.map(d=>d.score).filter(isFinite);
+  const passRate=Math.round(data.filter(d=>d.score>=60).length/data.length*100);
+  const r1=pearsonCorr(data.filter(d=>d.studyHours).map(d=>d.studyHours),data.filter(d=>d.studyHours).map(d=>d.score));
+  const r2=pearsonCorr(data.filter(d=>d.attendance).map(d=>d.attendance),data.filter(d=>d.attendance).map(d=>d.score));
+  const stronger=Math.abs(r1)>=Math.abs(r2)?'study hours':'attendance';
+  const strongerR=Math.abs(r1)>=Math.abs(r2)?r1:r2;
+  const rp=data.filter(d=>d.studyHours);
+  const reg=linearRegression(rp.map(d=>d.studyHours),rp.map(d=>d.score));
+  document.getElementById('insightsBody').innerHTML=`<p class="insight-text">
+    <strong>${data.length}</strong> students loaded. Mean score: <span class="highlight">${fmtStat(s2Mean(scores))}</span>
+    (σ = <span class="highlight">${fmtStat(stdDev(scores))}</span>). Pass rate: <span class="highlight">${passRate}%</span>.
+    <br><br>
+    <span class="highlight">${stronger}</span> is the stronger predictor (r = <span class="highlight">${strongerR}</span>).
+    Regression: score = <span class="highlight">${reg.slope}</span>·hrs + <span class="highlight">${reg.intercept}</span>
+    (R² = <span class="highlight">${reg.rSquared}</span>).
+    A student studying <span class="highlight">15 hrs/week</span> is predicted to score
+    <span class="highlight">${fmtStat(reg.slope*15+reg.intercept)}</span>.
+  </p>`;
 }
 
 /* ══ END STUDENT 2 CONTRIBUTION ZONE ══ */

@@ -1,0 +1,3169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Data Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0b0c0f;
+    --surface:  #13151a;
+    --border:   #1f2230;
+    --accent:   #e8ff47;
+    --accent2:  #47c8ff;
+    --muted:    #4a5068;
+    --text:     #d8dde8;
+    --text-dim: #6b7494;
+    --danger:   #ff4d6a;
+    --mono:     'Space Mono', monospace;
+    --sans:     'Syne', sans-serif;
+    --radius:   6px;
+  }
+
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); }
+
+  /* ─── LAYOUT ─── */
+  .shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+  }
+
+  .logo-mark {
+    width: 36px; height: 36px;
+    border: 2px solid var(--accent);
+    display: grid; place-items: center;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: -.5px;
+  }
+
+  header h1 { font-size: 18px; font-weight: 800; letter-spacing: -.3px; }
+  header h1 span { color: var(--accent); }
+
+  .branch-tag {
+    margin-left: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 100px;
+  }
+
+  main { padding: 40px 32px; max-width: 1200px; margin: 0 auto; width: 100%; }
+
+  /* ─── UPLOAD ZONE ─── */
+  #upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 64px 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    position: relative;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  #upload-zone::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 80%, rgba(232,255,71,.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  #upload-zone:hover, #upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(232,255,71,.03);
+  }
+
+  #upload-zone .upload-icon {
+    width: 52px; height: 52px;
+    border: 2px solid var(--muted);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    margin: 0 auto 20px;
+    font-size: 22px;
+    transition: border-color .2s;
+  }
+
+  #upload-zone:hover .upload-icon { border-color: var(--accent); }
+
+  #upload-zone h2 { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  #upload-zone p  { color: var(--text-dim); font-size: 14px; }
+  #upload-zone p strong { color: var(--accent); font-weight: 700; }
+
+  #file-input { display: none; }
+
+  .btn-upload {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 24px;
+    padding: 10px 22px;
+    background: var(--accent);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    border: none; border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+
+  .btn-upload:hover { opacity: .85; }
+
+  /* ─── PROGRESS ─── */
+  #progress-wrap { display: none; margin-top: 32px; }
+
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .progress-bar-outer {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-bar-inner {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width .1s linear;
+    border-radius: 2px;
+  }
+
+  /* ─── DASHBOARD ─── */
+  #dashboard { display: none; margin-top: 48px; }
+
+  .section-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+
+  .section-header h3 {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+  }
+
+  .section-header .pill {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: rgba(232,255,71,.12);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 100px;
+  }
+
+  /* ─── META CARDS ─── */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .meta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    animation: fadeUp .4s ease both;
+  }
+
+  .meta-card:nth-child(1) { animation-delay: .05s; }
+  .meta-card:nth-child(2) { animation-delay: .10s; }
+  .meta-card:nth-child(3) { animation-delay: .15s; }
+  .meta-card:nth-child(4) { animation-delay: .20s; }
+  .meta-card:nth-child(5) { animation-delay: .25s; }
+
+  .meta-card .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    margin-bottom: 8px;
+  }
+
+  .meta-card .value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    font-family: var(--mono);
+  }
+
+  .meta-card .sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  /* ─── COLUMNS TABLE ─── */
+  .col-table-wrap {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 40px;
+    animation: fadeUp .4s ease .3s both;
+  }
+
+  .col-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  .col-table th {
+    background: var(--surface);
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 10px;
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .col-table td {
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .col-table tr:last-child td { border-bottom: none; }
+  .col-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  .type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 10px;
+    letter-spacing: .5px;
+  }
+
+  .type-numeric { background: rgba(71,200,255,.12); color: var(--accent2); }
+  .type-string  { background: rgba(232,255,71,.10); color: var(--accent); }
+
+  .null-bar-wrap { width: 100px; height: 4px; background: var(--border); border-radius: 2px; }
+  .null-bar      { height: 100%; border-radius: 2px; background: var(--danger); }
+
+  /* ─── STATS TABLE ─── */
+  .stats-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    animation: fadeUp .4s ease .45s both;
+  }
+
+  .stats-table {
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+    min-width: 700px;
+    width: 100%;
+  }
+
+  .stats-table th {
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .stats-table th:first-child { text-align: left; }
+
+  .stats-table td {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+    color: var(--text);
+  }
+
+  .stats-table td:first-child {
+    text-align: left;
+    color: var(--accent);
+    font-weight: 700;
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stats-table tr:last-child td { border-bottom: none; }
+  .stats-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ─── PREVIEW TABLE ─── */
+  .preview-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 40px;
+    animation: fadeUp .4s ease .6s both;
+  }
+
+  .preview-table {
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 11px;
+    min-width: 600px;
+    width: 100%;
+  }
+
+  .preview-table th {
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .preview-table td {
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .preview-table tr:last-child td { border-bottom: none; }
+  .preview-table tr:hover td { background: rgba(255,255,255,.02); }
+
+  .null-cell { color: var(--muted); font-style: italic; }
+
+  /* ─── DS INSPECTOR ─── */
+  .ds-inspector {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 40px;
+    animation: fadeUp .4s ease .7s both;
+  }
+
+  .ds-inspector pre {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.7;
+    overflow-x: auto;
+  }
+
+  .ds-inspector pre .key   { color: var(--accent2); }
+  .ds-inspector pre .str   { color: var(--accent); }
+  .ds-inspector pre .num   { color: #ff9f5a; }
+  .ds-inspector pre .arr   { color: var(--muted); }
+
+  /* ─── APPLY FILTER SORT PANEL ─── */
+  #afs-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 40px;
+    animation: fadeUp .4s ease .35s both;
+    overflow: hidden;
+  }
+
+  .afs-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .afs-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .afs-name-input {
+    flex: 1;
+    min-width: 160px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .afs-name-input:focus { border-color: var(--accent); }
+  .afs-name-input::placeholder { color: var(--muted); }
+
+  .afs-mode-group {
+    display: flex;
+    gap: 4px;
+  }
+
+  .afs-mode-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .afs-mode-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .afs-mode-btn.active { background: rgba(232,255,71,.1); border-color: var(--accent); color: var(--accent); }
+
+  .afs-sort-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .afs-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 10px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .afs-select:focus { border-color: var(--accent); }
+
+  .afs-dir-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all .15s;
+    min-width: 64px;
+    text-align: center;
+  }
+  .afs-dir-btn:hover,
+  .afs-dir-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(71,200,255,.08); }
+
+  .afs-apply-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  .afs-apply-btn:hover { opacity: .85; }
+
+  .afs-clear-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .afs-clear-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  .afs-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    flex-wrap: wrap;
+  }
+
+  .afs-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(71,200,255,.1);
+    border: 1px solid rgba(71,200,255,.25);
+    color: var(--accent2);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+
+  .afs-chip.filter-chip { background: rgba(232,255,71,.08); border-color: rgba(232,255,71,.2); color: var(--accent); }
+  .afs-chip.sort-chip   { background: rgba(71,200,255,.08); border-color: rgba(71,200,255,.2); color: var(--accent2); }
+  .afs-chip.result-chip { background: rgba(255,255,255,.04); border-color: var(--border); color: var(--text-dim); }
+
+  .afs-chip-x {
+    cursor: pointer;
+    opacity: .6;
+    font-size: 12px;
+    line-height: 1;
+  }
+  .afs-chip-x:hover { opacity: 1; }
+
+  /* ─── RENDER TABLE ─── */
+  .rt-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .rt-search {
+    flex: 1;
+    min-width: 180px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 12px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .rt-search:focus { border-color: var(--accent); }
+  .rt-search::placeholder { color: var(--muted); }
+
+  .rt-col-toggle-wrap { position: relative; }
+
+  .rt-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    white-space: nowrap;
+  }
+  .rt-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .rt-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(232,255,71,.07); }
+
+  .rt-col-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 0;
+    z-index: 100;
+    min-width: 200px;
+    max-height: 260px;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  .rt-col-dropdown.open { display: block; }
+
+  .rt-col-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    user-select: none;
+    transition: background .1s;
+  }
+  .rt-col-item:hover { background: rgba(255,255,255,.03); color: var(--text); }
+  .rt-col-item input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+
+  .rt-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .rt-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    animation: fadeUp .4s ease .5s both;
+  }
+
+  .rt-table {
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 100%;
+    min-width: 400px;
+  }
+
+  .rt-table th {
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .9px;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+    cursor: pointer;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+  .rt-table th:hover { color: var(--text); }
+
+  .rt-th-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .rt-sort-icon {
+    font-size: 9px;
+    opacity: .35;
+    transition: opacity .15s;
+  }
+  .rt-table th:hover .rt-sort-icon { opacity: .7; }
+  .rt-table th.sort-asc  .rt-sort-icon,
+  .rt-table th.sort-desc .rt-sort-icon { opacity: 1; color: var(--accent); }
+
+  .rt-table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .rt-table tr:last-child td { border-bottom: none; }
+  .rt-table tbody tr:hover td { background: rgba(255,255,255,.025); }
+
+  .rt-table td.cell-num { color: var(--accent2); text-align: right; }
+  .rt-table th.col-num  { text-align: right; }
+  .rt-table td.cell-null { color: var(--muted); font-style: italic; }
+
+  .rt-highlight { background: rgba(232,255,71,.18); border-radius: 2px; }
+
+  .rt-pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .rt-page-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+    min-width: 32px;
+    text-align: center;
+  }
+  .rt-page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .rt-page-btn.current { background: rgba(232,255,71,.12); border-color: var(--accent); color: var(--accent); }
+  .rt-page-btn:disabled { opacity: .3; cursor: default; }
+
+  .rt-page-info {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+
+  .rt-page-size {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 8px;
+    cursor: pointer;
+    outline: none;
+  }
+  .rt-page-size:focus { border-color: var(--accent); }
+
+  /* ─── SUMMARY CARDS ─── */
+  #sc-container {
+    margin-bottom: 40px;
+  }
+
+  .sc-remap-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .sc-remap-bar span { color: var(--text-dim); white-space: nowrap; }
+
+  .sc-remap-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 8px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .15s;
+    max-width: 180px;
+  }
+  .sc-remap-select:focus { border-color: var(--accent); }
+
+  .sc-remap-label {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .sc-remap-sep {
+    color: var(--border);
+    font-size: 16px;
+    font-weight: 300;
+  }
+
+  .sc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  @media (max-width: 860px) { .sc-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .sc-grid { grid-template-columns: 1fr; } }
+
+  .sc-card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 22px 22px 18px;
+    overflow: hidden;
+    transition: border-color .2s, transform .2s;
+    animation: scCardIn .45s cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .sc-card:nth-child(1) { animation-delay: .04s; }
+  .sc-card:nth-child(2) { animation-delay: .10s; }
+  .sc-card:nth-child(3) { animation-delay: .16s; }
+  .sc-card:nth-child(4) { animation-delay: .22s; }
+
+  @keyframes scCardIn {
+    from { opacity: 0; transform: translateY(16px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .sc-card:hover { border-color: var(--sc-color, var(--accent)); transform: translateY(-2px); }
+
+  /* accent stripe top */
+  .sc-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--sc-color, var(--accent));
+    opacity: .7;
+  }
+
+  /* faint glow blob */
+  .sc-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; right: -20px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: var(--sc-color, var(--accent));
+    opacity: .04;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+  .sc-card:hover::after { opacity: .09; }
+
+  .sc-icon {
+    font-size: 18px;
+    margin-bottom: 12px;
+    display: block;
+    line-height: 1;
+  }
+
+  .sc-metric {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.3px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .sc-value {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--sc-color, var(--accent));
+    line-height: 1.1;
+    margin-bottom: 4px;
+    word-break: break-all;
+  }
+
+  .sc-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .sc-sub strong { color: var(--text); }
+
+  .sc-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--mono);
+    font-size: 10px;
+    margin-top: 6px;
+    padding: 2px 7px;
+    border-radius: 100px;
+    background: rgba(255,255,255,.05);
+  }
+
+  .sc-delta.up   { color: #4dffb4; background: rgba(77,255,180,.08); }
+  .sc-delta.down { color: var(--danger); background: rgba(255,77,106,.08); }
+  .sc-delta.neutral { color: var(--text-dim); }
+
+  .sc-col-badge {
+    position: absolute;
+    top: 10px; right: 12px;
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ─── RESET TABLE BAR ─── */
+  #rst-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(255,77,106,.06);
+    border: 1px solid rgba(255,77,106,.2);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    animation: fadeUp .25s ease both;
+  }
+  #rst-bar.visible { display: flex; }
+
+  .rst-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--danger);
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .rst-snapshot-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .rst-snap-btn {
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 9px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .rst-snap-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .rst-save-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .rst-save-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .rst-reset-btn {
+    background: rgba(255,77,106,.1);
+    border: 1px solid rgba(255,77,106,.3);
+    border-radius: var(--radius);
+    color: var(--danger);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .rst-reset-btn:hover { background: rgba(255,77,106,.18); border-color: var(--danger); }
+
+  /* ─── CHART SECTIONS ─── */
+  .chart-section-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin: 48px 0 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+  }
+  .chart-section-header h3 {
+    font-size: 13px; font-weight: 700;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 1.5px;
+  }
+  .badge-s2 {
+    font-family: var(--mono); font-size: 10px;
+    background: rgba(58,200,130,.12); color: #3ac882;
+    padding: 2px 8px; border-radius: 100px;
+    border: 1px solid rgba(58,200,130,.2);
+  }
+  .chart-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 16px; }
+  @media (max-width: 860px) { .chart-row { grid-template-columns: 1fr; } }
+  .chart-tile {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 22px;
+    animation: fadeUp .4s ease .4s both;
+  }
+  .chart-tile h4 {
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--text); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
+  }
+  .chart-tile .chart-sub { font-size: 10px; color: var(--text-dim); margin-bottom: 14px; font-family: var(--mono); }
+  .chart-placeholder {
+    height: 200px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 10px;
+    border: 2px dashed var(--border); border-radius: 6px;
+    color: var(--muted); font-family: var(--mono); font-size: 12px; text-align: center;
+  }
+  canvas { max-height: 260px; }
+  .analysis-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  @media (max-width: 960px) { .analysis-grid { grid-template-columns: 1fr; } }
+  .analysis-tile {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px; animation: fadeUp .4s ease .5s both;
+  }
+  .analysis-tile h4 {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.2px;
+    margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .kv-list { list-style: none; font-size: 11px; font-family: var(--mono); }
+  .kv-list li {
+    display: flex; justify-content: space-between;
+    padding: 7px 0; border-bottom: 1px solid var(--border); gap: 12px;
+  }
+  .kv-list li:last-child { border-bottom: none; }
+  .kv-list .k { color: var(--text-dim); }
+  .kv-list .v { color: #3ac882; font-weight: 600; text-align: right; }
+  .insights-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 24px 28px; margin-bottom: 40px; animation: fadeUp .4s ease .6s both;
+  }
+  .insights-panel h4 {
+    font-family: var(--mono); font-size: 10px; font-weight: 700;
+    color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px;
+  }
+  .insight-text { font-family: var(--mono); font-size: 12px; color: var(--text-dim); line-height: 1.9; }
+  .insight-text .highlight { color: var(--accent); font-weight: 600; }
+
+  /* ─── UTILS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in { animation: fadeUp .5s ease both; }
+
+  .error-box {
+    background: rgba(255,77,106,.08);
+    border: 1px solid rgba(255,77,106,.3);
+    color: var(--danger);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    margin-top: 16px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <div class="logo-mark">DE</div>
+    <h1>Data <span>Engine</span></h1>
+    <span class="branch-tag">⎇ feature/data-engine</span>
+  </header>
+
+  <main>
+
+    <!-- UPLOAD -->
+    <div id="upload-zone"
+         onclick="document.getElementById('file-input').click()"
+         ondragover="onDragOver(event)"
+         ondragleave="onDragLeave(event)"
+         ondrop="onDrop(event)">
+      <div class="upload-icon">📂</div>
+      <h2>Drop your CSV here</h2>
+      <p>Drag &amp; drop or <strong>browse</strong> to select a file.<br/>
+         Calls <code style="background:rgba(232,255,71,.1);color:var(--accent);padding:2px 6px;border-radius:3px;font-size:12px;">loadDataset()</code> → populates <code style="background:rgba(71,200,255,.1);color:var(--accent2);padding:2px 6px;border-radius:3px;font-size:12px;">window.DS</code></p>
+      <button class="btn-upload" onclick="event.stopPropagation(); document.getElementById('file-input').click()">
+        ↑ Browse file
+      </button>
+      <input type="file" id="file-input" accept=".csv,.tsv,.txt" onchange="handleFileSelect(this)" />
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+
+    <!-- PROGRESS -->
+    <div id="progress-wrap">
+      <div class="progress-label">
+        <span id="progress-label-text">Parsing…</span>
+        <span id="progress-pct">0%</span>
+      </div>
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" id="progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard">
+
+      <!-- META CARDS -->
+      <div class="section-header">
+        <h3>Dataset overview</h3>
+        <span class="pill" id="filename-pill"></span>
+      </div>
+      <div class="meta-grid" id="meta-grid"></div>
+
+      <!-- SUMMARY CARDS -->
+      <div class="section-header">
+        <h3>Render Summary Cards</h3>
+        <span class="pill">mean score · top scorer · pass rate · avg study hrs</span>
+      </div>
+      <div id="sc-container"></div>
+
+      <!-- COLUMN PROFILE -->
+      <div class="section-header">
+        <h3>Column profile</h3>
+        <span class="pill" id="col-count-pill"></span>
+      </div>
+      <div class="col-table-wrap">
+        <table class="col-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Column</th>
+              <th>Type</th>
+              <th>Non-null</th>
+              <th>Null %</th>
+              <th>Null bar</th>
+            </tr>
+          </thead>
+          <tbody id="col-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- FILTER + SORT PANEL -->
+      <div class="section-header">
+        <h3>applyFilterSort</h3>
+        <span class="pill">filter by name · sort by column</span>
+      </div>
+      <div id="afs-panel">
+        <!-- populated by applyFilterSort() after load -->
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="section-header">
+        <h3>Data preview</h3>
+        <span class="pill">first 10 rows</span>
+      </div>
+      <div class="preview-scroll">
+        <table class="preview-table">
+          <thead id="preview-thead"></thead>
+          <tbody id="preview-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- NUMERIC STATS -->
+      <div class="section-header">
+        <h3>Numeric statistics</h3>
+        <span class="pill" id="num-col-pill"></span>
+      </div>
+      <div class="stats-scroll">
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>Column</th>
+              <th>Count</th>
+              <th>Mean</th>
+              <th>Std Dev</th>
+              <th>Min</th>
+              <th>25%</th>
+              <th>Median</th>
+              <th>75%</th>
+              <th>Max</th>
+            </tr>
+          </thead>
+          <tbody id="stats-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- RENDER TABLE -->
+      <div class="section-header" style="margin-top:40px">
+        <h3>renderTable</h3>
+        <span class="pill" id="rt-row-pill">—</span>
+      </div>
+      <!-- Reset bar — shown whenever the table is in a modified state -->
+      <div id="rst-bar">
+        <span class="rst-label" id="rst-label">Table modified</span>
+        <div class="rst-snapshot-list" id="rst-snap-list"></div>
+        <button class="rst-save-btn" id="rst-save-snap-btn" title="Save current view as a named snapshot">⊕ Save snapshot</button>
+        <button class="rst-reset-btn" id="rst-reset-btn">↺ Reset to original</button>
+      </div>
+      <div id="rt-container"></div>
+
+      <!-- window.DS INSPECTOR -->
+      <div class="section-header" style="margin-top:40px">
+        <h3>window.DS</h3>
+        <span class="pill">live object</span>
+      </div>
+      <div class="ds-inspector">
+        <pre id="ds-pre"></pre>
+      </div>
+
+
+      <!-- ═══════════════════════════════════════
+           SECTION 2 — VISUALIZATIONS (STUDENT 2)
+      ════════════════════════════════════════ -->
+      <div class="chart-section-header" id="sec-viz-header" style="display:none;">
+        <h3>Visualizations</h3>
+        <span class="pill badge-s2">Student 2 · feature/viz-analysis</span>
+      </div>
+      <div class="chart-row" id="sec-viz-charts" style="display:none;">
+        <div class="chart-tile">
+          <h4>Top 10 — Final Scores</h4>
+          <p class="chart-sub">Sorted descending · hover for detail</p>
+          <div class="chart-placeholder" id="barPlaceholder"><span>📊</span>Loading…</div>
+          <canvas id="barChart" style="display:none;"></canvas>
+        </div>
+        <div class="chart-tile">
+          <h4>Grade Distribution</h4>
+          <p class="chart-sub">All students · A / B / C / D breakdown</p>
+          <div class="chart-placeholder" id="doughnutPlaceholder"><span>🍩</span>Loading…</div>
+          <canvas id="doughnutChart" style="display:none;"></canvas>
+        </div>
+      </div>
+      <div class="chart-tile" id="sec-viz-scatter" style="display:none; margin-bottom:16px;">
+        <h4>Attendance % vs Final Score</h4>
+        <p class="chart-sub">Each point = one student · includes regression line overlay</p>
+        <div class="chart-placeholder" id="scatterPlaceholder" style="height:160px;"><span>🔵</span>Loading…</div>
+        <canvas id="scatterChart" style="display:none; max-height:220px;"></canvas>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           SECTION 3 — STATISTICAL ANALYSIS (STUDENT 2)
+      ════════════════════════════════════════ -->
+      <div class="chart-section-header" id="sec-analysis-header" style="display:none;">
+        <h3>Statistical Analysis</h3>
+        <span class="pill badge-s2">Student 2 · feature/viz-analysis</span>
+      </div>
+      <div class="analysis-grid" id="sec-analysis-grid" style="display:none;">
+        <div class="analysis-tile">
+          <h4>Descriptive Statistics</h4>
+          <ul class="kv-list">
+            <li><span class="k">n (sample size)</span>   <span class="v" id="an">—</span></li>
+            <li><span class="k">Min score</span>          <span class="v" id="aMin">—</span></li>
+            <li><span class="k">Max score</span>          <span class="v" id="aMax">—</span></li>
+            <li><span class="k">Range</span>              <span class="v" id="aRange">—</span></li>
+            <li><span class="k">Variance σ²</span>        <span class="v" id="aVariance">—</span></li>
+            <li><span class="k">Std Dev σ</span>          <span class="v" id="aStdDev">—</span></li>
+          </ul>
+        </div>
+        <div class="analysis-tile">
+          <h4>Correlation Analysis</h4>
+          <ul class="kv-list">
+            <li><span class="k">Pearson r (hours→score)</span>  <span class="v" id="rPearson">—</span></li>
+            <li><span class="k">Interpretation</span>           <span class="v" id="rInterp">—</span></li>
+            <li><span class="k">Pearson r (attend→score)</span> <span class="v" id="rPearson2">—</span></li>
+            <li><span class="k">Interpretation</span>           <span class="v" id="rInterp2">—</span></li>
+            <li><span class="k">Stronger predictor</span>       <span class="v" id="rStronger">—</span></li>
+            <li><span class="k">Direction</span>                <span class="v" id="rDirection">—</span></li>
+          </ul>
+        </div>
+        <div class="analysis-tile">
+          <h4>Linear Regression</h4>
+          <ul class="kv-list">
+            <li><span class="k">Equation</span>         <span class="v" id="regEquation">—</span></li>
+            <li><span class="k">Slope (m)</span>         <span class="v" id="regSlope">—</span></li>
+            <li><span class="k">Intercept (b)</span>    <span class="v" id="regIntercept">—</span></li>
+            <li><span class="k">R² (fit quality)</span> <span class="v" id="regR2">—</span></li>
+            <li><span class="k">Interpretation</span>   <span class="v" id="regInterp">—</span></li>
+            <li><span class="k">Predicted @15 hrs</span><span class="v" id="regPredict">—</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="insights-panel" id="sec-insights" style="display:none;">
+        <h4>✦ Data-Driven Insights</h4>
+        <div id="insightsBody">
+          <p class="insight-text" style="color:var(--muted);">Awaiting data load…</p>
+        </div>
+      </div>
+
+    </div><!-- /dashboard -->
+
+  </main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   DATA ENGINE  —  loadDataset() + window.DS
+   ═══════════════════════════════════════════════ */
+
+window.DS = null;   // populated by loadDataset()
+
+/**
+ * loadDataset(file) — parse a CSV File object,
+ * compute summary statistics, and store the result
+ * in window.DS.
+ *
+ * window.DS shape:
+ * {
+ *   filename : string,
+ *   rowCount : number,
+ *   colCount : number,
+ *   columns  : Array<{ name, type, nonNull, nullCount, nullPct }>,
+ *   headers  : string[],
+ *   rows     : object[],         // all rows as plain objects
+ *   preview  : object[],         // first 10 rows
+ *   stats    : object,           // per-column descriptive stats
+ *   loadedAt : ISO string,
+ * }
+ */
+async function loadDataset(file) {
+  return new Promise((resolve, reject) => {
+    let allRows = [];
+    let headers = [];
+    let rowCount = 0;
+    let chunkCount = 0;
+
+    showProgress(true);
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: true,
+      chunk(results, parser) {
+        if (rowCount === 0 && results.meta.fields) {
+          headers = results.meta.fields;
+        }
+        allRows = allRows.concat(results.data);
+        rowCount += results.data.length;
+        chunkCount++;
+        // Estimate progress via chunk count (PapaParse doesn't expose bytes easily)
+        const pct = Math.min(chunkCount * 15, 90);
+        setProgress(pct, `Parsing… ${rowCount.toLocaleString()} rows`);
+      },
+      complete() {
+        setProgress(100, 'Processing…');
+
+        const colCount = headers.length;
+        const columns  = buildColumnProfile(headers, allRows);
+        const stats    = buildStats(headers, allRows);
+
+        window.DS = {
+          filename : file.name,
+          rowCount,
+          colCount,
+          columns,
+          headers,
+          rows    : allRows,
+          preview : allRows.slice(0, 10),
+          stats,
+          loadedAt: new Date().toISOString(),
+        };
+
+        setTimeout(() => {
+          showProgress(false);
+          renderDashboard(file.name);
+          resolve(window.DS);
+        }, 200);
+      },
+      error(err) {
+        showError(err.message);
+        showProgress(false);
+        reject(err);
+      }
+    });
+  });
+}
+
+/* ── Column profile ───────────────────────────── */
+function buildColumnProfile(headers, rows) {
+  return headers.map(name => {
+    let nonNull = 0;
+    let isNumeric = true;
+
+    for (const row of rows) {
+      const v = row[name];
+      if (v !== null && v !== undefined && v !== '') nonNull++;
+      if (typeof v !== 'number' && v !== null && v !== undefined && v !== '') isNumeric = false;
+    }
+
+    const nullCount = rows.length - nonNull;
+    const nullPct   = rows.length > 0 ? (nullCount / rows.length) * 100 : 0;
+
+    return { name, type: isNumeric ? 'numeric' : 'string', nonNull, nullCount, nullPct };
+  });
+}
+
+/* ── Descriptive statistics ───────────────────── */
+function buildStats(headers, rows) {
+  const stats = {};
+  for (const col of headers) {
+    const vals = rows
+      .map(r => r[col])
+      .filter(v => typeof v === 'number' && isFinite(v));
+
+    if (vals.length === 0) continue;
+
+    vals.sort((a, b) => a - b);
+
+    const n    = vals.length;
+    const mean = vals.reduce((s, v) => s + v, 0) / n;
+    const variance = vals.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
+
+    stats[col] = {
+      count : n,
+      mean  : mean,
+      std   : Math.sqrt(variance),
+      min   : vals[0],
+      p25   : percentile(vals, 25),
+      median: percentile(vals, 50),
+      p75   : percentile(vals, 75),
+      max   : vals[n - 1],
+    };
+  }
+  return stats;
+}
+
+function percentile(sorted, p) {
+  const idx = (p / 100) * (sorted.length - 1);
+  const lo  = Math.floor(idx);
+  const hi  = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+/* ── Render dashboard ─────────────────────────── */
+function renderDashboard(filename) {
+  const DS = window.DS;
+
+  document.getElementById('filename-pill').textContent = filename;
+
+  /* Meta cards */
+  const numericCols  = DS.columns.filter(c => c.type === 'numeric').length;
+  const totalNulls   = DS.columns.reduce((s, c) => s + c.nullCount, 0);
+  const totalCells   = DS.rowCount * DS.colCount;
+  const completeness = totalCells > 0 ? ((1 - totalNulls / totalCells) * 100).toFixed(1) : '—';
+
+  document.getElementById('meta-grid').innerHTML = [
+    { label: 'Rows',           value: DS.rowCount.toLocaleString(),  sub: 'total records'    },
+    { label: 'Columns',        value: DS.colCount,                   sub: 'fields'           },
+    { label: 'Numeric cols',   value: numericCols,                   sub: 'float / int'      },
+    { label: 'String cols',    value: DS.colCount - numericCols,     sub: 'categorical / id' },
+    { label: 'Completeness',   value: completeness + '%',            sub: 'non-null cells'   },
+  ].map(c => `
+    <div class="meta-card">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}</div>
+      <div class="sub">${c.sub}</div>
+    </div>
+  `).join('');
+
+  /* Column profile */
+  document.getElementById('col-count-pill').textContent = `${DS.colCount} columns`;
+  document.getElementById('col-tbody').innerHTML = DS.columns.map((c, i) => `
+    <tr>
+      <td style="color:var(--muted)">${i + 1}</td>
+      <td style="color:var(--text)">${esc(c.name)}</td>
+      <td><span class="type-badge type-${c.type}">${c.type}</span></td>
+      <td>${c.nonNull.toLocaleString()}</td>
+      <td style="color:${c.nullPct > 20 ? 'var(--danger)' : 'var(--text-dim)'}">${c.nullPct.toFixed(1)}%</td>
+      <td>
+        <div class="null-bar-wrap">
+          <div class="null-bar" style="width:${c.nullPct.toFixed(1)}%"></div>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  /* Preview */
+  const previewCols = DS.headers.slice(0, 8);   // cap at 8 for readability
+  document.getElementById('preview-thead').innerHTML =
+    '<tr>' + previewCols.map(h => `<th>${esc(h)}</th>`).join('') + '</tr>';
+  document.getElementById('preview-tbody').innerHTML = DS.preview.map(row =>
+    '<tr>' + previewCols.map(h => {
+      const v = row[h];
+      if (v === null || v === undefined || v === '') return `<td class="null-cell">null</td>`;
+      return `<td>${esc(String(v))}</td>`;
+    }).join('') + '</tr>'
+  ).join('');
+
+  /* Numeric stats */
+  const statCols = Object.keys(DS.stats);
+  document.getElementById('num-col-pill').textContent = `${statCols.length} numeric columns`;
+
+  const fmt = n => {
+    if (!isFinite(n)) return '—';
+    if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return n.toFixed(2);
+  };
+
+  document.getElementById('stats-tbody').innerHTML = statCols.map(col => {
+    const s = DS.stats[col];
+    return `<tr>
+      <td title="${esc(col)}">${esc(col)}</td>
+      <td>${s.count.toLocaleString()}</td>
+      <td>${fmt(s.mean)}</td>
+      <td>${fmt(s.std)}</td>
+      <td>${fmt(s.min)}</td>
+      <td>${fmt(s.p25)}</td>
+      <td>${fmt(s.median)}</td>
+      <td>${fmt(s.p75)}</td>
+      <td>${fmt(s.max)}</td>
+    </tr>`;
+  }).join('');
+
+  /* window.DS inspector */
+  document.getElementById('ds-pre').innerHTML = renderDSInspector(DS);
+
+  /* renderSummaryCards — 4 stat cards */
+  window.SC  = renderSummaryCards(DS.rows, { headers: DS.headers });
+
+  /* renderTable — full interactive data table */
+  window.RT  = renderTable(DS.rows, { pageSize: 25 });
+
+  /* applyFilterSort — filter by name, sort by column */
+  window.AFS = applyFilterSort(DS);
+
+  /* resetTable — restore original view, manage snapshots */
+  window.RST = resetTable(DS);
+
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('upload-zone').style.display = 'none';
+
+  /* ── Student 2 integration hook ── */
+  onDataReady(DS.rows, DS.headers);
+
+}
+
+function renderDSInspector(DS) {
+  const k = s => `<span class="key">"${s}"</span>`;
+  const s = v => `<span class="str">"${esc(String(v))}"</span>`;
+  const n = v => `<span class="num">${v}</span>`;
+  const a = v => `<span class="arr">[Array(${v})]</span>`;
+
+  const colSample = DS.columns.slice(0, 3).map(c =>
+    `    { ${k('name')}: ${s(c.name)}, ${k('type')}: ${s(c.type)}, ${k('nullPct')}: ${n(c.nullPct.toFixed(1))} }`
+  ).join(',\n');
+
+  const statSample = Object.entries(DS.stats).slice(0, 2).map(([col, st]) =>
+    `    ${k(col)}: { ${k('count')}: ${n(st.count)}, ${k('mean')}: ${n(st.mean.toFixed(4))}, ${k('median')}: ${n(st.median.toFixed(4))} }`
+  ).join(',\n');
+
+  return `window.DS = {
+  ${k('filename')} : ${s(DS.filename)},
+  ${k('rowCount')}  : ${n(DS.rowCount)},
+  ${k('colCount')}  : ${n(DS.colCount)},
+  ${k('loadedAt')}  : ${s(DS.loadedAt)},
+  ${k('headers')}   : ${a(DS.headers.length)},
+  ${k('rows')}      : ${a(DS.rows.length)},
+  ${k('preview')}   : ${a(DS.preview.length)},
+  ${k('columns')}   : [          // sample (first 3 of ${DS.columns.length})
+${colSample},
+    …
+  ],
+  ${k('stats')}     : {          // sample (first 2 of ${Object.keys(DS.stats).length} numeric cols)
+${statSample},
+    …
+  },
+}`;
+}
+
+/* ── renderSummaryCards ───────────────────────── */
+/**
+ * renderSummaryCards(data, options?) — renders 4 domain-aware stat cards:
+ *   1. Mean Score       — average of the primary numeric score column
+ *   2. Top Scorer       — name + value of the row with the highest score
+ *   3. Pass Rate        — % of rows at or above a pass threshold
+ *   4. Avg Study Hours  — average of the study hours / time column
+ *
+ * Column auto-detection: scans header names for semantic hints.
+ * All column mappings are overridable via a remap bar in the UI
+ * or via the options object.
+ *
+ * @param {object[]} data          - Array of row objects (e.g. window.DS.rows)
+ * @param {object}   [options]
+ *   @param {string}   [options.target]        - CSS selector (default '#sc-container')
+ *   @param {string}   [options.scoreCol]      - Column for mean/top/pass calculations
+ *   @param {string}   [options.nameCol]       - Column for "top scorer" label
+ *   @param {string}   [options.studyCol]      - Column for avg study hours
+ *   @param {number}   [options.passThreshold] - Value >= this is a pass (default 50)
+ *   @param {string[]} [options.headers]       - All column names (for remap dropdowns)
+ *
+ * Returns a controller:
+ *   window.SC = { refresh(data, opts), getConfig(), setThreshold(n) }
+ */
+function renderSummaryCards(data, options = {}) {
+  if (!data || !data.length) return;
+
+  const mount = document.querySelector(options.target || '#sc-container');
+  if (!mount) return;
+
+  const allHeaders = options.headers || Object.keys(data[0]);
+
+  /* ── column auto-detection ── */
+  const SCORE_HINTS  = ['score', 'grade', 'mark', 'result', 'gpa', 'rating', 'points', 'exam', 'test', 'math', 'reading', 'writing', 'performance'];
+  const NAME_HINTS   = ['name', 'student', 'person', 'id', 'country', 'title', 'label', 'series'];
+  const STUDY_HINTS  = ['study', 'hour', 'time', 'hrs', 'duration', 'practice', 'prep', 'learning'];
+
+  function bestCol(hints, fallback) {
+    const lower = allHeaders.map(h => ({ h, l: h.toLowerCase() }));
+    for (const hint of hints) {
+      const m = lower.find(({ l }) => l.includes(hint));
+      if (m) return m.h;
+    }
+    return fallback;
+  }
+
+  /* numeric columns only for score/study */
+  const numericCols = allHeaders.filter(h => {
+    const sample = data.slice(0, 100).map(r => r[h]).filter(v => v !== null && v !== undefined && v !== '');
+    return sample.length > 0 && sample.filter(v => typeof v === 'number').length / sample.length > 0.6;
+  });
+
+  const stringCols = allHeaders.filter(h => !numericCols.includes(h));
+
+  /* mutable config */
+  let cfg = {
+    scoreCol      : options.scoreCol      || bestCol(SCORE_HINTS, numericCols[0] || allHeaders[0]),
+    nameCol       : options.nameCol       || bestCol(NAME_HINTS,  stringCols[0]  || allHeaders[0]),
+    studyCol      : options.studyCol      || bestCol(STUDY_HINTS, numericCols[1] || numericCols[0] || allHeaders[0]),
+    passThreshold : options.passThreshold ?? 50,
+  };
+
+  /* ── stat computation ── */
+  function compute(rows, c) {
+    const scores = rows
+      .map(r => r[c.scoreCol])
+      .filter(v => typeof v === 'number' && isFinite(v));
+
+    const studyVals = rows
+      .map(r => r[c.studyCol])
+      .filter(v => typeof v === 'number' && isFinite(v));
+
+    /* mean score */
+    const mean = scores.length
+      ? scores.reduce((s, v) => s + v, 0) / scores.length
+      : null;
+
+    /* top scorer — row with highest scoreCol value */
+    let topRow = null, topVal = -Infinity;
+    for (const row of rows) {
+      const v = row[c.scoreCol];
+      if (typeof v === 'number' && isFinite(v) && v > topVal) {
+        topVal = v; topRow = row;
+      }
+    }
+
+    /* pass rate */
+    const passCount = scores.filter(v => v >= c.passThreshold).length;
+    const passRate  = scores.length ? (passCount / scores.length) * 100 : null;
+
+    /* avg study hours */
+    const avgStudy = studyVals.length
+      ? studyVals.reduce((s, v) => s + v, 0) / studyVals.length
+      : null;
+
+    return {
+      mean, topRow, topVal, topName: topRow ? topRow[c.nameCol] : null,
+      passRate, passCount, totalScored: scores.length,
+      avgStudy, studyCount: studyVals.length,
+    };
+  }
+
+  /* ── number formatters ── */
+  const f2   = n => (n == null ? '—' : (+n).toFixed(2));
+  const f1   = n => (n == null ? '—' : (+n).toFixed(1));
+  const fpct = n => (n == null ? '—' : (+n).toFixed(1) + '%');
+  const fshort = n => {
+    if (n == null || !isFinite(n)) return '—';
+    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    return (+n).toFixed(2);
+  };
+
+  /* ── render ── */
+  function render() {
+    const stats = compute(data, cfg);
+
+    /* pass rate colour hint */
+    const passColour = stats.passRate == null ? 'var(--muted)'
+      : stats.passRate >= 75 ? '#4dffb4'
+      : stats.passRate >= 50 ? 'var(--accent)'
+      : 'var(--danger)';
+
+    /* delta badge for pass rate */
+    const passDelta = stats.passRate == null ? ''
+      : stats.passRate >= 75
+        ? `<span class="sc-delta up">▲ above target</span>`
+        : stats.passRate >= 50
+          ? `<span class="sc-delta neutral">≈ at threshold</span>`
+          : `<span class="sc-delta down">▼ below target</span>`;
+
+    const topLabel = stats.topName != null
+      ? String(stats.topName).slice(0, 28) + (String(stats.topName).length > 28 ? '…' : '')
+      : '—';
+
+    /* remap selects */
+    const colOpts = (sel) => allHeaders.map(h =>
+      `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h)}</option>`
+    ).join('');
+
+    const numOpts = (sel) => numericCols.map(h =>
+      `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h)}</option>`
+    ).join('');
+
+    mount.innerHTML = `
+      <!-- Remap bar -->
+      <div class="sc-remap-bar">
+        <span>Score col:</span>
+        <select class="sc-remap-select" id="sc-score-col">${numOpts(cfg.scoreCol)}</select>
+        <span class="sc-remap-sep">|</span>
+        <span>Name col:</span>
+        <select class="sc-remap-select" id="sc-name-col">${colOpts(cfg.nameCol)}</select>
+        <span class="sc-remap-sep">|</span>
+        <span>Study hrs col:</span>
+        <select class="sc-remap-select" id="sc-study-col">${numOpts(cfg.studyCol)}</select>
+        <span class="sc-remap-sep">|</span>
+        <span>Pass ≥</span>
+        <input type="number" id="sc-pass-thresh"
+               value="${cfg.passThreshold}" min="0" step="1"
+               style="width:64px;background:var(--bg);border:1px solid var(--border);
+                      border-radius:var(--radius);color:var(--text);
+                      font-family:var(--mono);font-size:11px;padding:4px 8px;outline:none;" />
+      </div>
+
+      <!-- 4 cards -->
+      <div class="sc-grid">
+
+        <!-- 1. Mean Score -->
+        <div class="sc-card" style="--sc-color: var(--accent)">
+          <span class="sc-col-badge" title="${esc(cfg.scoreCol)}">${esc(cfg.scoreCol)}</span>
+          <span class="sc-icon">📊</span>
+          <div class="sc-metric">Mean Score</div>
+          <div class="sc-value">${f2(stats.mean)}</div>
+          <div class="sc-sub">
+            across <strong>${stats.totalScored.toLocaleString()}</strong> records<br/>
+            range: ${fshort(stats.totalScored ? Math.min(...data.map(r => r[cfg.scoreCol]).filter(v => typeof v === 'number')) : null)}
+            – ${fshort(stats.topVal === -Infinity ? null : stats.topVal)}
+          </div>
+        </div>
+
+        <!-- 2. Top Scorer -->
+        <div class="sc-card" style="--sc-color: #c084fc">
+          <span class="sc-col-badge" title="${esc(cfg.nameCol)}">${esc(cfg.nameCol)}</span>
+          <span class="sc-icon">🏆</span>
+          <div class="sc-metric">Top Scorer</div>
+          <div class="sc-value" style="font-size:${topLabel.length > 14 ? '16px' : '22px'}">${esc(topLabel)}</div>
+          <div class="sc-sub">
+            score: <strong>${fshort(stats.topVal === -Infinity ? null : stats.topVal)}</strong><br/>
+            col: ${esc(cfg.scoreCol)}
+          </div>
+        </div>
+
+        <!-- 3. Pass Rate -->
+        <div class="sc-card" style="--sc-color: ${passColour}">
+          <span class="sc-col-badge" title="≥ ${cfg.passThreshold}">≥ ${cfg.passThreshold}</span>
+          <span class="sc-icon">✅</span>
+          <div class="sc-metric">Pass Rate</div>
+          <div class="sc-value" style="color:${passColour}">${fpct(stats.passRate)}</div>
+          <div class="sc-sub">
+            <strong>${stats.passCount.toLocaleString()}</strong> of ${stats.totalScored.toLocaleString()} passed
+          </div>
+          ${passDelta}
+        </div>
+
+        <!-- 4. Avg Study Hours -->
+        <div class="sc-card" style="--sc-color: var(--accent2)">
+          <span class="sc-col-badge" title="${esc(cfg.studyCol)}">${esc(cfg.studyCol)}</span>
+          <span class="sc-icon">📚</span>
+          <div class="sc-metric">Avg Study Hrs</div>
+          <div class="sc-value">${f1(stats.avgStudy)}</div>
+          <div class="sc-sub">
+            across <strong>${stats.studyCount.toLocaleString()}</strong> records<br/>
+            col: ${esc(cfg.studyCol)}
+          </div>
+        </div>
+
+      </div><!-- /.sc-grid -->
+    `;
+
+    /* wire remap controls */
+    mount.querySelector('#sc-score-col').addEventListener('change', e => {
+      cfg.scoreCol = e.target.value; render();
+    });
+    mount.querySelector('#sc-name-col').addEventListener('change', e => {
+      cfg.nameCol = e.target.value; render();
+    });
+    mount.querySelector('#sc-study-col').addEventListener('change', e => {
+      cfg.studyCol = e.target.value; render();
+    });
+    mount.querySelector('#sc-pass-thresh').addEventListener('change', e => {
+      const v = parseFloat(e.target.value);
+      if (isFinite(v)) { cfg.passThreshold = v; render(); }
+    });
+  }
+
+  render();
+
+  return {
+    refresh      : (newData, opts = {}) => {
+      if (newData) data = newData;
+      Object.assign(cfg, opts);
+      render();
+    },
+    getConfig    : () => ({ ...cfg }),
+    setThreshold : (n) => { cfg.passThreshold = n; render(); },
+  };
+}
+
+/* ── resetTable ───────────────────────────────── */
+/**
+ * resetTable(ds) — restore the renderTable view to its original state,
+ * clearing all filters, sorts, searches, and column visibility changes
+ * applied by applyFilterSort() or manual table interaction.
+ *
+ * Also provides a named snapshot system so users can save and
+ * jump between views without losing work.
+ *
+ * Integrates with:
+ *   window.RT  (renderTable controller)
+ *   window.AFS (applyFilterSort controller)
+ *
+ * Returns a controller:
+ *   window.RST = {
+ *     reset(silent?)       — full reset to original, clears AFS panel
+ *     saveSnapshot(label?) — snapshot current RT + AFS state
+ *     restoreSnapshot(id)  — jump back to a named snapshot
+ *     listSnapshots()      — array of saved snapshots
+ *     getHistory()         — ordered reset/apply history log
+ *   }
+ */
+function resetTable(ds) {
+  /* ── snapshot store ── */
+  const snapshots = [];       // [{ id, label, ts, rtState, afsState }]
+  const history   = [];       // [{ action, ts, detail }]
+  let   snapIdSeq = 0;
+
+  /* ── DOM refs (wired after RT + AFS are live) ── */
+  const bar         = document.getElementById('rst-bar');
+  const rstLabel    = document.getElementById('rst-label');
+  const snapList    = document.getElementById('rst-snap-list');
+  const saveBtn     = document.getElementById('rst-save-snap-btn');
+  const resetBtn    = document.getElementById('rst-reset-btn');
+
+  /* ── show/hide the reset bar ── */
+  function setBarVisible(on, reason) {
+    bar.classList.toggle('visible', on);
+    if (on && reason) rstLabel.textContent = reason;
+  }
+
+  /* ── snapshot helpers ── */
+  function captureState(label) {
+    const rtState  = window.RT  ? window.RT.getState()  : null;
+    const afsState = window.AFS ? window.AFS.getState() : null;
+    return { id: ++snapIdSeq, label: label || `Snapshot ${snapIdSeq}`, ts: new Date(), rtState, afsState };
+  }
+
+  function renderSnapButtons() {
+    snapList.innerHTML = snapshots.map(s =>
+      `<button class="rst-snap-btn" data-id="${s.id}" title="${s.ts.toLocaleTimeString()}">
+        ⊡ ${esc(s.label)}
+      </button>`
+    ).join('');
+    snapList.querySelectorAll('.rst-snap-btn').forEach(btn => {
+      btn.addEventListener('click', () => restoreSnapshot(+btn.dataset.id));
+    });
+  }
+
+  /* ── core reset ── */
+  function reset(silent = false) {
+    // 1. Reset renderTable internal state
+    if (window.RT) {
+      window.RT.resetData();       // clears externalData, goes back to full ds.rows
+    }
+
+    // 2. Reset applyFilterSort panel
+    if (window.AFS) {
+      window.AFS.clear();          // clears filter input, sort, chips
+    }
+
+    // 3. Clear the table's own search input
+    const searchInput = document.querySelector('#rt-search-input');
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.dispatchEvent(new Event('input'));   // triggers RT's internal search reset
+    }
+
+    // 4. Hide the reset bar (we're back to baseline)
+    setBarVisible(false);
+
+    // 5. Log
+    if (!silent) {
+      history.push({ action: 'reset', ts: new Date(), detail: 'Restored original view' });
+    }
+  }
+
+  /* ── save snapshot ── */
+  function saveSnapshot(label) {
+    const snap = captureState(label);
+    snapshots.push(snap);
+    history.push({ action: 'snapshot', ts: snap.ts, detail: snap.label });
+    renderSnapButtons();
+    setBarVisible(true, `${snapshots.length} snapshot${snapshots.length > 1 ? 's' : ''} saved`);
+    return snap.id;
+  }
+
+  /* ── restore snapshot ── */
+  function restoreSnapshot(id) {
+    const snap = snapshots.find(s => s.id === id);
+    if (!snap) return;
+
+    const { afsState, rtState } = snap;
+
+    // Replay AFS state
+    if (window.AFS && afsState) {
+      window.AFS.apply(
+        afsState.filterVal,
+        afsState.sortCol,
+        afsState.sortDir,
+        afsState.mode
+      );
+    }
+
+    history.push({ action: 'restore', ts: new Date(), detail: snap.label });
+    setBarVisible(true, `Restored: "${snap.label}"`);
+  }
+
+  /* ── wire UI buttons ── */
+  resetBtn.addEventListener('click', reset);
+
+  saveBtn.addEventListener('click', () => {
+    const label = prompt('Name this snapshot:', `View ${snapshots.length + 1}`) ?? '';
+    if (label.trim()) saveSnapshot(label.trim());
+    else if (label !== null) saveSnapshot();   // empty string → auto-label
+  });
+
+  /* ── watch for any modification to show the reset bar ── */
+  // Proxy renderTable's applyExternal to auto-show the bar
+  if (window.RT) {
+    const origApply = window.RT.applyFilterSort.bind(window.RT);
+    window.RT.applyFilterSort = function(rows, sortCol, sortDir) {
+      origApply(rows, sortCol, sortDir);
+      const filtered = rows?.length ?? 0;
+      const total    = ds.rowCount;
+      if (filtered < total || sortCol) {
+        setBarVisible(true, `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} rows`);
+      }
+    };
+
+    const origReset = window.RT.resetData.bind(window.RT);
+    window.RT.resetData = function() {
+      origReset();
+      setBarVisible(false);
+    };
+  }
+
+  return {
+    reset,
+    saveSnapshot,
+    restoreSnapshot,
+    listSnapshots : () => snapshots.map(s => ({ id: s.id, label: s.label, ts: s.ts })),
+    getHistory    : () => [...history],
+  };
+}
+
+/* ── applyFilterSort ──────────────────────────── */
+/**
+ * applyFilterSort(ds, options?) — filter rows by a name field and
+ * sort by any column, then push the result back into the live table.
+ *
+ * @param {object}   ds              - A window.DS-shaped dataset object
+ * @param {object}   [options]
+ *   @param {string}   [options.nameCol]    - Which column is the "name" field
+ *                                           (auto-detected if omitted)
+ *   @param {string}   [options.filterVal]  - Initial filter string
+ *   @param {string}   [options.sortCol]    - Initial sort column
+ *   @param {'asc'|'desc'} [options.sortDir] - Initial sort direction (default 'asc')
+ *   @param {'contains'|'starts'|'exact'} [options.mode] - Match mode (default 'contains')
+ *
+ * Renders a control panel into #afs-panel.
+ * Calls window.RT.applyFilterSort(filtered, sortCol, sortDir) to
+ * update the live renderTable instance.
+ *
+ * Returns a controller:
+ *   { getState(), apply(filterVal, sortCol, sortDir, mode), clear() }
+ */
+function applyFilterSort(ds, options = {}) {
+  if (!ds || !ds.rows || !ds.rows.length) return;
+
+  const panel = document.getElementById('afs-panel');
+  if (!panel) return;
+
+  /* ── auto-detect the "name" column ── */
+  const NAME_HINTS = ['name', 'country', 'title', 'label', 'series', 'description', 'desc', 'id'];
+  const autoNameCol = (() => {
+    if (options.nameCol) return options.nameCol;
+    const lower = ds.headers.map(h => ({ h, l: h.toLowerCase() }));
+    for (const hint of NAME_HINTS) {
+      const match = lower.find(({ l }) => l.includes(hint));
+      if (match) return match.h;
+    }
+    return ds.headers[0];
+  })();
+
+  /* ── state ── */
+  let nameCol   = autoNameCol;
+  let filterVal = options.filterVal || '';
+  let sortCol   = options.sortCol   || null;
+  let sortDir   = options.sortDir   || 'asc';
+  let mode      = options.mode      || 'contains';   // 'contains' | 'starts' | 'exact'
+  let lastResult = ds.rows;
+
+  /* ── build unique name col options ── */
+  const stringCols = ds.columns
+    .filter(c => c.type === 'string')
+    .map(c => c.name);
+
+  const numericCols = ds.columns
+    .filter(c => c.type === 'numeric')
+    .map(c => c.name);
+
+  /* ── render panel scaffold ── */
+  panel.innerHTML = `
+    <div class="afs-top">
+      <span class="afs-label">Filter by</span>
+      <select class="afs-select" id="afs-name-col">
+        ${ds.headers.map(h => `<option value="${esc(h)}" ${h === nameCol ? 'selected' : ''}>${esc(h)}</option>`).join('')}
+      </select>
+      <input class="afs-name-input" id="afs-filter-input"
+             type="text" placeholder="e.g. Afghanistan, GDP…"
+             value="${esc(filterVal)}" />
+      <div class="afs-mode-group">
+        ${['contains','starts','exact'].map(m =>
+          `<button class="afs-mode-btn${mode === m ? ' active' : ''}" data-mode="${m}">${
+            m === 'contains' ? '⊃ contains' : m === 'starts' ? '⌖ starts' : '= exact'
+          }</button>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="afs-sort-row">
+      <span class="afs-label">Sort by</span>
+      <select class="afs-select" id="afs-sort-col">
+        <option value="">— none —</option>
+        ${ds.headers.map(h => `<option value="${esc(h)}" ${h === sortCol ? 'selected' : ''}>${esc(h)}</option>`).join('')}
+      </select>
+      <button class="afs-dir-btn${sortDir === 'asc' ? ' active' : ''}" id="afs-dir-asc">▲ ASC</button>
+      <button class="afs-dir-btn${sortDir === 'desc' ? ' active' : ''}" id="afs-dir-desc">▼ DESC</button>
+      <button class="afs-apply-btn" id="afs-apply-btn">Apply →</button>
+      <button class="afs-clear-btn" id="afs-clear-btn">✕ Clear</button>
+    </div>
+    <div class="afs-status-bar" id="afs-status"></div>
+  `;
+
+  /* ── wire controls ── */
+  const nameColSel  = panel.querySelector('#afs-name-col');
+  const filterInput = panel.querySelector('#afs-filter-input');
+  const sortColSel  = panel.querySelector('#afs-sort-col');
+  const dirAsc      = panel.querySelector('#afs-dir-asc');
+  const dirDesc     = panel.querySelector('#afs-dir-desc');
+  const applyBtn    = panel.querySelector('#afs-apply-btn');
+  const clearBtn    = panel.querySelector('#afs-clear-btn');
+
+  nameColSel.addEventListener('change', e => { nameCol = e.target.value; });
+  sortColSel.addEventListener('change', e => { sortCol = e.target.value || null; });
+
+  dirAsc.addEventListener('click', () => {
+    sortDir = 'asc';
+    dirAsc.classList.add('active'); dirDesc.classList.remove('active');
+  });
+  dirDesc.addEventListener('click', () => {
+    sortDir = 'desc';
+    dirDesc.classList.add('active'); dirAsc.classList.remove('active');
+  });
+
+  panel.querySelectorAll('.afs-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      mode = btn.dataset.mode;
+      panel.querySelectorAll('.afs-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  /* live-filter as user types (debounced 120 ms) */
+  let debounceTimer;
+  filterInput.addEventListener('input', e => {
+    filterVal = e.target.value;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(runApply, 120);
+  });
+
+  applyBtn.addEventListener('click', runApply);
+  clearBtn.addEventListener('click', runClear);
+
+  /* also allow Enter key */
+  filterInput.addEventListener('keydown', e => { if (e.key === 'Enter') runApply(); });
+
+  /* ── core: filter + sort pipeline ── */
+  function matchRow(row) {
+    if (!filterVal.trim()) return true;
+    const cell = row[nameCol];
+    if (cell === null || cell === undefined) return false;
+    const haystack = String(cell).toLowerCase();
+    const needle   = filterVal.trim().toLowerCase();
+    if (mode === 'exact')   return haystack === needle;
+    if (mode === 'starts')  return haystack.startsWith(needle);
+    return haystack.includes(needle);               // 'contains' (default)
+  }
+
+  function sortRows(rows) {
+    if (!sortCol) return rows;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      if (av === null || av === undefined) return 1;
+      if (bv === null || bv === undefined) return -1;
+      if (typeof av === 'number' && typeof bv === 'number') return dir * (av - bv);
+      return dir * String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: 'base' });
+    });
+  }
+
+  function runApply() {
+    filterVal = filterInput.value;
+    sortCol   = sortColSel.value || null;
+
+    const filtered = ds.rows.filter(matchRow);
+    const sorted   = sortRows(filtered);
+    lastResult     = sorted;
+
+    /* push into renderTable if controller is live */
+    if (window.RT && typeof window.RT.applyFilterSort === 'function') {
+      window.RT.applyFilterSort(sorted, sortCol, sortDir);
+    }
+
+    renderStatus(filtered.length, sorted.length);
+    scrollToTable();
+  }
+
+  function runClear() {
+    filterVal = '';  sortCol = null;  sortDir = 'asc';  mode = 'contains';
+    filterInput.value = '';
+    sortColSel.value  = '';
+    nameColSel.value  = nameCol;
+    dirAsc.classList.add('active'); dirDesc.classList.remove('active');
+    panel.querySelectorAll('.afs-mode-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
+    lastResult = ds.rows;
+
+    if (window.RT && typeof window.RT.applyFilterSort === 'function') {
+      window.RT.applyFilterSort(ds.rows, null, 'asc');
+    }
+    renderStatus(ds.rows.length, ds.rows.length, true);
+  }
+
+  function renderStatus(filteredCount, sortedCount, cleared = false) {
+    const statusBar = panel.querySelector('#afs-status');
+    if (cleared) { statusBar.innerHTML = ''; return; }
+
+    const chips = [];
+    if (filterVal.trim()) {
+      chips.push(`<span class="afs-chip filter-chip">
+        ⊃ <strong>${esc(nameCol)}</strong> ${mode} "${esc(filterVal)}"
+        <span class="afs-chip-x" id="afs-clear-filter">×</span>
+      </span>`);
+    }
+    if (sortCol) {
+      chips.push(`<span class="afs-chip sort-chip">
+        ${sortDir === 'asc' ? '▲' : '▼'} sorted by <strong>${esc(sortCol)}</strong>
+        <span class="afs-chip-x" id="afs-clear-sort">×</span>
+      </span>`);
+    }
+    chips.push(`<span class="afs-chip result-chip">
+      ${filteredCount.toLocaleString()} / ${ds.rows.length.toLocaleString()} rows
+    </span>`);
+
+    statusBar.innerHTML = chips.join('');
+
+    statusBar.querySelector('#afs-clear-filter')?.addEventListener('click', () => {
+      filterInput.value = ''; filterVal = ''; runApply();
+    });
+    statusBar.querySelector('#afs-clear-sort')?.addEventListener('click', () => {
+      sortColSel.value = ''; sortCol = null; runApply();
+    });
+  }
+
+  function scrollToTable() {
+    const rtSection = document.getElementById('rt-container');
+    if (rtSection) rtSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ── initial apply if options provided ── */
+  if (filterVal || sortCol) runApply();
+
+  /* ── return controller ── */
+  return {
+    getState : () => ({ nameCol, filterVal, sortCol, sortDir, mode, resultCount: lastResult.length }),
+    apply    : (fv, sc, sd, m) => {
+      if (fv !== undefined) { filterVal = fv; filterInput.value = fv; }
+      if (sc !== undefined) { sortCol   = sc; sortColSel.value  = sc || ''; }
+      if (sd !== undefined) { sortDir   = sd; dirAsc.classList.toggle('active', sd === 'asc'); dirDesc.classList.toggle('active', sd === 'desc'); }
+      if (m  !== undefined) { mode      = m;  panel.querySelectorAll('.afs-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m)); }
+      runApply();
+    },
+    clear : runClear,
+    getResult: () => lastResult,
+  };
+}
+
+/* ── renderTable ──────────────────────────────── */
+/**
+ * renderTable(data, options?) — renders an interactive HTML table
+ * into #rt-container (or any container via options.target).
+ *
+ * @param {object[]} data       - Array of row objects (e.g. window.DS.rows)
+ * @param {object}   [options]
+ *   @param {string}   [options.target]    - CSS selector for mount element (default '#rt-container')
+ *   @param {string[]} [options.columns]   - Which columns to show (default: all)
+ *   @param {number}   [options.pageSize]  - Rows per page (default 25)
+ *   @param {string}   [options.sortCol]   - Initial sort column
+ *   @param {'asc'|'desc'} [options.sortDir] - Initial sort direction
+ *
+ * Features:
+ *  - Click column headers to sort (asc → desc → none)
+ *  - Global search across all visible columns
+ *  - Toggle column visibility
+ *  - Pagination with page-size selector
+ *  - Numeric cells right-aligned + coloured
+ *  - Null cells styled with italic placeholder
+ *  - Search term highlighting
+ */
+function renderTable(data, options = {}) {
+  if (!data || !data.length) return;
+
+  const mountSel  = options.target   || '#rt-container';
+  const mount     = document.querySelector(mountSel);
+  if (!mount) return;
+
+  const allCols   = Object.keys(data[0]);
+  const colTypes  = detectColTypes(allCols, data);
+
+  /* ── mutable state ── */
+  let visibleCols = options.columns  ? [...options.columns] : [...allCols];
+  let pageSize    = options.pageSize || 25;
+  let currentPage = 1;
+  let sortCol     = options.sortCol  || null;
+  let sortDir     = options.sortDir  || 'asc';
+  let searchTerm  = '';
+  let externalData = null;  // set by applyFilterSort() to override internal filter
+
+  /* ── build scaffold ── */
+  mount.innerHTML = `
+    <div class="rt-toolbar">
+      <input class="rt-search" id="rt-search-input" type="text" placeholder="Search all columns…" />
+      <div class="rt-col-toggle-wrap">
+        <button class="rt-btn" id="rt-col-btn">⊞ Columns</button>
+        <div class="rt-col-dropdown" id="rt-col-dropdown"></div>
+      </div>
+      <span class="rt-count" id="rt-match-count"></span>
+    </div>
+    <div class="rt-scroll">
+      <table class="rt-table" id="rt-main-table">
+        <thead id="rt-thead"></thead>
+        <tbody id="rt-tbody"></tbody>
+      </table>
+    </div>
+    <div class="rt-pagination" id="rt-pagination"></div>
+  `;
+
+  /* ── column toggle dropdown ── */
+  const dropdown = mount.querySelector('#rt-col-dropdown');
+  dropdown.innerHTML = allCols.map(col => `
+    <label class="rt-col-item">
+      <input type="checkbox" data-col="${esc(col)}" ${visibleCols.includes(col) ? 'checked' : ''} />
+      ${esc(col)}
+    </label>
+  `).join('');
+
+  dropdown.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      visibleCols = allCols.filter(c => {
+        const el = dropdown.querySelector(`input[data-col="${esc(c)}"]`);
+        return el && el.checked;
+      });
+      currentPage = 1;
+      redraw();
+    });
+  });
+
+  const colBtn = mount.querySelector('#rt-col-btn');
+  colBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    dropdown.classList.toggle('open');
+    colBtn.classList.toggle('active');
+  });
+  document.addEventListener('click', () => {
+    dropdown.classList.remove('open');
+    colBtn.classList.remove('active');
+  });
+
+  /* ── search ── */
+  mount.querySelector('#rt-search-input').addEventListener('input', e => {
+    searchTerm  = e.target.value.trim().toLowerCase();
+    currentPage = 1;
+    redraw();
+  });
+
+  /* ── core pipeline ── */
+  function getFiltered() {
+    // If applyFilterSort() has pushed an external slice, use it directly
+    if (externalData !== null) {
+      if (!searchTerm) return externalData;
+      return externalData.filter(row =>
+        visibleCols.some(col => {
+          const v = row[col];
+          return v !== null && v !== undefined && String(v).toLowerCase().includes(searchTerm);
+        })
+      );
+    }
+    if (!searchTerm) return data;
+    return data.filter(row =>
+      visibleCols.some(col => {
+        const v = row[col];
+        return v !== null && v !== undefined && String(v).toLowerCase().includes(searchTerm);
+      })
+    );
+  }
+
+  function getSorted(rows) {
+    if (!sortCol) return rows;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...rows].sort((a, b) => {
+      const av = a[sortCol], bv = b[sortCol];
+      if (av === null || av === undefined) return 1;
+      if (bv === null || bv === undefined) return -1;
+      if (typeof av === 'number' && typeof bv === 'number') return dir * (av - bv);
+      return dir * String(av).localeCompare(String(bv), undefined, { numeric: true });
+    });
+  }
+
+  function highlight(str) {
+    if (!searchTerm) return esc(str);
+    const escaped = esc(str);
+    const idx = escaped.toLowerCase().indexOf(searchTerm);
+    if (idx === -1) return escaped;
+    return (
+      escaped.slice(0, idx) +
+      `<mark class="rt-highlight">${escaped.slice(idx, idx + searchTerm.length)}</mark>` +
+      escaped.slice(idx + searchTerm.length)
+    );
+  }
+
+  function redraw() {
+    const filtered = getFiltered();
+    const sorted   = getSorted(filtered);
+    const total    = sorted.length;
+    const pages    = Math.max(1, Math.ceil(total / pageSize));
+    currentPage    = Math.min(currentPage, pages);
+
+    const start    = (currentPage - 1) * pageSize;
+    const pageRows = sorted.slice(start, start + pageSize);
+
+    /* update pill */
+    const pill = document.getElementById('rt-row-pill');
+    if (pill) pill.textContent = `${total.toLocaleString()} rows`;
+    mount.querySelector('#rt-match-count').textContent =
+      searchTerm ? `${total.toLocaleString()} match${total !== 1 ? 'es' : ''}` : `${data.length.toLocaleString()} rows`;
+
+    /* thead */
+    const thead = mount.querySelector('#rt-thead');
+    thead.innerHTML = '<tr>' + visibleCols.map(col => {
+      const isNum  = colTypes[col] === 'numeric';
+      const active = sortCol === col;
+      const icon   = active ? (sortDir === 'asc' ? '▲' : '▼') : '⇅';
+      const cls    = [isNum ? 'col-num' : '', active ? `sort-${sortDir}` : ''].filter(Boolean).join(' ');
+      return `<th class="${cls}" data-col="${esc(col)}">
+        <span class="rt-th-inner">${esc(col)} <span class="rt-sort-icon">${icon}</span></span>
+      </th>`;
+    }).join('') + '</tr>';
+
+    thead.querySelectorAll('th').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        if (sortCol === col) {
+          if (sortDir === 'asc') sortDir = 'desc';
+          else { sortCol = null; sortDir = 'asc'; }
+        } else {
+          sortCol = col; sortDir = 'asc';
+        }
+        redraw();
+      });
+    });
+
+    /* tbody */
+    const tbody = mount.querySelector('#rt-tbody');
+    tbody.innerHTML = pageRows.map(row =>
+      '<tr>' + visibleCols.map(col => {
+        const v = row[col];
+        if (v === null || v === undefined || v === '') return `<td class="cell-null">—</td>`;
+        const isNum = colTypes[col] === 'numeric' && typeof v === 'number';
+        const cls   = isNum ? 'cell-num' : '';
+        const disp  = isNum ? fmtNum(v) : highlight(String(v));
+        return `<td class="${cls}">${disp}</td>`;
+      }).join('') + '</tr>'
+    ).join('');
+
+    /* pagination */
+    renderPagination(pages, total, start, pageRows.length);
+  }
+
+  function renderPagination(pages, total, start, count) {
+    const pag = mount.querySelector('#rt-pagination');
+
+    const pageButtons = [];
+    const addBtn = (label, page, isCurrent, disabled) => {
+      pageButtons.push(`<button class="rt-page-btn${isCurrent ? ' current' : ''}"
+        data-page="${page}" ${disabled ? 'disabled' : ''}>${label}</button>`);
+    };
+
+    addBtn('‹', currentPage - 1, false, currentPage === 1);
+
+    // page window logic
+    const window_ = 2;
+    const lo = Math.max(1, currentPage - window_);
+    const hi = Math.min(pages, currentPage + window_);
+
+    if (lo > 1)   { addBtn(1, 1, false, false); if (lo > 2) pageButtons.push(`<span class="rt-page-btn" style="cursor:default;opacity:.3">…</span>`); }
+    for (let p = lo; p <= hi; p++) addBtn(p, p, p === currentPage, false);
+    if (hi < pages) { if (hi < pages - 1) pageButtons.push(`<span class="rt-page-btn" style="cursor:default;opacity:.3">…</span>`); addBtn(pages, pages, false, false); }
+
+    addBtn('›', currentPage + 1, false, currentPage === pages);
+
+    const sizes = [10, 25, 50, 100].map(s =>
+      `<option value="${s}" ${s === pageSize ? 'selected' : ''}>${s} / page</option>`
+    ).join('');
+
+    pag.innerHTML = pageButtons.join('') +
+      `<select class="rt-page-size" id="rt-page-size">${sizes}</select>` +
+      `<span class="rt-page-info">
+        ${(start + 1).toLocaleString()}–${(start + count).toLocaleString()} of ${total.toLocaleString()}
+      </span>`;
+
+    pag.querySelectorAll('.rt-page-btn[data-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPage = +btn.dataset.page;
+        redraw();
+      });
+    });
+
+    pag.querySelector('#rt-page-size').addEventListener('change', e => {
+      pageSize    = +e.target.value;
+      currentPage = 1;
+      redraw();
+    });
+  }
+
+  /* ── helpers ── */
+  function detectColTypes(cols, rows) {
+    const sample = rows.slice(0, 200);
+    const types  = {};
+    for (const col of cols) {
+      let numCount = 0, total = 0;
+      for (const row of sample) {
+        const v = row[col];
+        if (v !== null && v !== undefined && v !== '') { total++; if (typeof v === 'number') numCount++; }
+      }
+      types[col] = total > 0 && numCount / total > 0.7 ? 'numeric' : 'string';
+    }
+    return types;
+  }
+
+  function fmtNum(n) {
+    if (!isFinite(n)) return String(n);
+    // Use locale formatting, up to 4 decimal places, trimming trailing zeros
+    return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  }
+
+  /* ── initial draw ── */
+  redraw();
+
+  /* ── expose applyFilterSort hook ──
+     Called by applyFilterSort() to push a pre-filtered+sorted
+     slice into this table instance, overriding the internal pipeline.  */
+  function applyExternal(rows, newSortCol, newSortDir) {
+    externalData = rows;
+    if (newSortCol !== undefined) sortCol = newSortCol;
+    if (newSortDir !== undefined) sortDir = newSortDir;
+    currentPage = 1;
+    redraw();
+  }
+
+  /* ── return controller ── (callable from console) */
+  return {
+    redraw,
+    applyFilterSort : applyExternal,
+    resetData       : () => { externalData = null; currentPage = 1; redraw(); },
+    getState        : () => ({ sortCol, sortDir, searchTerm, currentPage, pageSize, visibleCols, isFiltered: externalData !== null }),
+  };
+}
+
+/* ── UI helpers ───────────────────────────────── */
+function showProgress(on) {
+  document.getElementById('progress-wrap').style.display = on ? 'block' : 'none';
+  if (!on) { setProgress(0, ''); }
+}
+
+function setProgress(pct, label) {
+  document.getElementById('progress-bar').style.width  = pct + '%';
+  document.getElementById('progress-pct').textContent  = pct + '%';
+  document.getElementById('progress-label-text').textContent = label;
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-box');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/* ── Drag & drop ─────────────────────────────── */
+function onDragOver(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.add('drag-over');
+}
+
+function onDragLeave(e) {
+  document.getElementById('upload-zone').classList.remove('drag-over');
+}
+
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) loadDataset(file);
+}
+
+function handleFileSelect(input) {
+  const file = input.files[0];
+  if (file) loadDataset(file);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ZONE 2 · STUDENT 2 — Visualizations + Deep Analysis Engine
+   Branch: feature/viz-analysis
+═══════════════════════════════════════════════════════════════════ */
+
+window.CHARTS = {};
+
+/* ─────────────────────────────────────────────────────────────────
+   COLUMN DETECTION STRATEGY
+   The viz/analysis layer works with ANY CSV, not just the student
+   dataset.  We use three tiers:
+
+   1. STUDENT MODE  — CSV has columns matching score/study/attend/grade
+      hints → full charts + statistical analysis rendered.
+
+   2. NUMERIC MODE  — Generic CSV with numeric columns but no student
+      hints → bar chart (top-10 values in best numeric col), scatter
+      (col1 vs col2), doughnut (quartile bands), plus general stats.
+
+   3. NON-NUMERIC   — No usable numeric columns → friendly message,
+      no charts shown.
+─────────────────────────────────────────────────────────────────── */
+
+/**
+ * onDataReady(rows, headers)
+ * Called by renderDashboard after data is fully loaded.
+ */
+function onDataReady(rows, headers) {
+  if (!rows || !rows.length || !headers || !headers.length) return;
+
+  // ── Identify column types ──────────────────────────────────────
+  function isNumericCol(col) {
+    const sample = rows.slice(0, 200).map(r => r[col]).filter(v => v !== null && v !== undefined && v !== '');
+    if (!sample.length) return false;
+    return sample.filter(v => typeof v === 'number' && isFinite(v)).length / sample.length > 0.5;
+  }
+
+  function isStringCol(col) {
+    const sample = rows.slice(0, 50).map(r => r[col]).filter(v => v !== null && v !== undefined && v !== '');
+    if (!sample.length) return false;
+    return sample.filter(v => typeof v === 'string' && v.trim() !== '').length / sample.length > 0.6;
+  }
+
+  const numericCols = headers.filter(isNumericCol);
+  const stringCols  = headers.filter(isStringCol);
+
+  if (!numericCols.length) {
+    // No numeric data — hide viz sections silently
+    return;
+  }
+
+  // ── Semantic hints (student dataset) ──────────────────────────
+  const lower = headers.map(h => ({ h, l: h.toLowerCase() }));
+  function find(...hints) {
+    for (const hint of hints) {
+      const m = lower.find(({ l }) => l.includes(hint));
+      if (m && (numericCols.includes(m.h) || hints === nameHints)) return m.h;
+    }
+    return null;
+  }
+  const nameHints = ['name','student','person','country','title','label','id','series'];
+
+  const scoreCol  = find('score','final','mark','result','exam','points','gpa','grade') || numericCols[0];
+  const studyCol  = find('study','hour','hrs','time','duration','prep','learning')       || numericCols[1] || numericCols[0];
+  const attendCol = find('attend','presence','rate','percent','pct')                     || numericCols[2] || numericCols[0];
+  const gradeCol  = lower.find(({l}) => l === 'grade' || l === 'letter')?.h              || null;
+  const nameCol   = (() => {
+    for (const hint of nameHints) {
+      const m = lower.find(({ l }) => l.includes(hint));
+      if (m) return m.h;
+    }
+    return stringCols[0] || headers[0];
+  })();
+
+  // ── Detect mode ───────────────────────────────────────────────
+  const isStudentMode = !!(
+    lower.find(({l}) => l.includes('score') || l.includes('final') || l.includes('mark')) &&
+    (lower.find(({l}) => l.includes('study') || l.includes('hour') || l.includes('hrs')) ||
+     lower.find(({l}) => l.includes('attend')))
+  );
+
+  // For non-student CSVs, pick the two most-populated numeric cols
+  // to use as scatter axes, and the first as the bar/stats col.
+  function colCoverage(col) {
+    return rows.filter(r => typeof r[col] === 'number' && isFinite(r[col])).length;
+  }
+  const sortedNumeric = [...numericCols].sort((a,b) => colCoverage(b) - colCoverage(a));
+  const primaryCol  = isStudentMode ? scoreCol  : sortedNumeric[0];
+  const secondaryCol= isStudentMode ? attendCol : (sortedNumeric[1] || sortedNumeric[0]);
+  const tertiaryCol = isStudentMode ? studyCol  : (sortedNumeric[2] || sortedNumeric[0]);
+
+  // ── Build adapted rows ────────────────────────────────────────
+  const adapted = rows
+    .map(r => {
+      const scoreVal  = parseFloat(r[primaryCol]);
+      const studyVal  = parseFloat(r[tertiaryCol]);
+      const attendVal = parseFloat(r[secondaryCol]);
+      if (!isFinite(scoreVal)) return null;   // skip rows with no primary value
+      const rawGrade = gradeCol ? r[gradeCol] : null;
+      return {
+        name       : String(r[nameCol] ?? '').trim() || '(no name)',
+        score      : scoreVal,
+        studyHours : isFinite(studyVal)  ? studyVal  : 0,
+        attendance : isFinite(attendVal) ? attendVal : 0,
+        grade      : rawGrade ? String(rawGrade).toUpperCase()[0] : deriveGrade(scoreVal),
+        job        : false,
+        // keep original row ref for tooltips
+        _raw       : r,
+      };
+    })
+    .filter(Boolean);
+
+  if (!adapted.length) return;
+
+  window.S2_DATA = adapted;
+  window.S2_COLS = { primaryCol, secondaryCol, tertiaryCol, nameCol, gradeCol, isStudentMode };
+
+  // ── Show Student 2 sections ───────────────────────────────────
+  ['sec-viz-header','sec-viz-charts','sec-viz-scatter',
+   'sec-analysis-header','sec-analysis-grid','sec-insights'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+
+  // Update section labels for non-student mode
+  if (!isStudentMode) {
+    const vizHeader = document.getElementById('sec-viz-header');
+    if (vizHeader) {
+      const h3 = vizHeader.querySelector('h3');
+      if (h3) h3.textContent = 'Visualizations — ' + primaryCol;
+    }
+    // update chart subtitles
+    const barSub = document.querySelector('#sec-viz-charts .chart-tile:first-child .chart-sub');
+    if (barSub) barSub.textContent = `Top 10 values · ${primaryCol}`;
+    const scatSub = document.querySelector('#sec-viz-scatter .chart-sub');
+    if (scatSub) scatSub.textContent = `${secondaryCol} vs ${primaryCol} · with regression line`;
+    const doughSub = document.querySelector('#sec-viz-charts .chart-tile:last-child .chart-sub');
+    if (doughSub) doughSub.textContent = `${primaryCol} quartile distribution`;
+  }
+
+  initCharts();
+  renderAnalysis(adapted, primaryCol, tertiaryCol, secondaryCol, isStudentMode);
+  renderInsights(adapted, primaryCol, tertiaryCol, secondaryCol, isStudentMode);
+}
+
+function deriveGrade(score) {
+  // Works for 0-100 scale; for other scales we bucket by percentile later
+  if (score >= 90) return 'A';
+  if (score >= 75) return 'B';
+  if (score >= 60) return 'C';
+  return 'D';
+}
+
+/* ── Shared math helpers ──────────────────────────────────────── */
+function s2Mean(arr) {
+  const clean = arr.filter(v => typeof v === 'number' && isFinite(v));
+  if (!clean.length) return 0;
+  return Math.round((clean.reduce((s, v) => s + v, 0) / clean.length) * 100) / 100;
+}
+
+/* ── PART A: CHART FUNCTIONS ─────────────────────────────────── */
+
+function initCharts() {
+  drawBarChart('barChart', window.S2_DATA);
+  drawDoughnut('doughnutChart', window.S2_DATA);
+  drawScatterPlot('scatterChart', window.S2_DATA);
+}
+
+function drawBarChart(canvasId, data) {
+  // Sort by score desc, top 10
+  const top10 = [...data].sort((a, b) => b.score - a.score).slice(0, 10);
+  if (window.CHARTS[canvasId]) window.CHARTS[canvasId].destroy();
+  const ctx = document.getElementById(canvasId).getContext('2d');
+
+  // Adaptive label: shorten long names
+  const labels = top10.map(d => d.name.length > 22 ? d.name.slice(0, 20) + '…' : d.name);
+
+  window.CHARTS[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: window.S2_COLS?.primaryCol || 'Score',
+        data: top10.map(d => d.score),
+        backgroundColor: 'rgba(232,255,71,0.75)',
+        borderColor:     'rgba(232,255,71,1)',
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#13151a',
+          titleColor: '#e8ff47',
+          bodyColor: '#d8dde8',
+          titleFont: { family: "'Space Mono'", size: 11 },
+          bodyFont:  { family: "'Space Mono'", size: 11 },
+          callbacks: {
+            title: items => top10[items[0].dataIndex]?.name || '',
+            label: ctx  => ` ${window.S2_COLS?.primaryCol || 'Score'}: ${ctx.parsed.x}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
+          grid:  { color: '#1f2230' }
+        },
+        y: {
+          ticks: { color: '#d8dde8', font: { family: "'Space Mono'", size: 10 } },
+          grid:  { color: '#1f2230' }
+        }
+      }
+    }
+  });
+  document.getElementById('barPlaceholder').style.display = 'none';
+  document.getElementById(canvasId).style.display = 'block';
+}
+
+function drawScatterPlot(canvasId, data) {
+  // Filter to rows that have both axes
+  const valid = data.filter(d => isFinite(d.attendance) && d.attendance !== 0 && isFinite(d.score));
+  if (!valid.length) {
+    document.getElementById('scatterPlaceholder').textContent = 'Not enough numeric data for scatter plot.';
+    return;
+  }
+
+  const points = valid.map(d => ({ x: d.attendance, y: d.score }));
+  if (window.CHARTS[canvasId]) window.CHARTS[canvasId].destroy();
+
+  // Regression line
+  const reg  = linearRegression(valid.map(d => d.attendance), valid.map(d => d.score));
+  const xVals = valid.map(d => d.attendance);
+  const xMin  = Math.min(...xVals), xMax = Math.max(...xVals);
+  const regLine = [
+    { x: xMin, y: Math.round((reg.slope * xMin + reg.intercept) * 100) / 100 },
+    { x: xMax, y: Math.round((reg.slope * xMax + reg.intercept) * 100) / 100 }
+  ];
+
+  const cols = window.S2_COLS || {};
+  const xLabel = cols.secondaryCol || 'X';
+  const yLabel = cols.primaryCol   || 'Y';
+
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  window.CHARTS[canvasId] = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Data points',
+          data: points,
+          backgroundColor: 'rgba(71,200,255,0.7)',
+          borderColor:     '#47c8ff',
+          pointRadius:      5,
+          pointHoverRadius: 8,
+        },
+        {
+          label: 'Regression',
+          data: regLine,
+          type: 'line',
+          borderColor:  '#e8ff47',
+          borderWidth:   2,
+          borderDash:   [6, 4],
+          pointRadius:   0,
+          fill:          false,
+          tension:       0,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { labels: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } } },
+        tooltip: {
+          backgroundColor: '#13151a',
+          titleColor: '#e8ff47',
+          bodyColor:  '#d8dde8',
+          titleFont: { family: "'Space Mono'" },
+          bodyFont:  { family: "'Space Mono'" },
+          filter: item => item.datasetIndex === 0,
+          callbacks: {
+            title: items => valid[items[0].dataIndex]?.name || '',
+            label: ctx  => ` ${yLabel}: ${ctx.parsed.y}  |  ${xLabel}: ${ctx.parsed.x}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: xLabel, color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
+          ticks: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
+          grid:  { color: '#1f2230' }
+        },
+        y: {
+          title: { display: true, text: yLabel, color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
+          ticks: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } },
+          grid:  { color: '#1f2230' }
+        }
+      }
+    }
+  });
+  document.getElementById('scatterPlaceholder').style.display = 'none';
+  document.getElementById(canvasId).style.display = 'block';
+}
+
+function drawDoughnut(canvasId, data) {
+  if (window.CHARTS[canvasId]) window.CHARTS[canvasId].destroy();
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const cols = window.S2_COLS || {};
+
+  let labels, counts, colors;
+
+  if (cols.isStudentMode && cols.gradeCol) {
+    // Student mode: A/B/C/D from actual grade column
+    const gc = { A: 0, B: 0, C: 0, D: 0 };
+    data.forEach(d => {
+      const g = d.grade?.toString().toUpperCase()[0];
+      if (gc[g] !== undefined) gc[g]++;
+    });
+    labels = ['A', 'B', 'C', 'D'];
+    counts = [gc.A, gc.B, gc.C, gc.D];
+    colors = ['#4dffb4','#47c8ff','#e8ff47','#ff4d6a'];
+  } else {
+    // Generic mode: bucket values into quartile bands (Q1/Q2/Q3/Q4)
+    const vals = data.map(d => d.score).sort((a, b) => a - b);
+    const n = vals.length;
+    const q1 = vals[Math.floor(n * 0.25)];
+    const q2 = vals[Math.floor(n * 0.50)];
+    const q3 = vals[Math.floor(n * 0.75)];
+    const bands = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
+    vals.forEach(v => {
+      if      (v <= q1) bands.Q1++;
+      else if (v <= q2) bands.Q2++;
+      else if (v <= q3) bands.Q3++;
+      else              bands.Q4++;
+    });
+    labels = [`≤${q1?.toFixed(1)} (Q1)`, `≤${q2?.toFixed(1)} (Q2)`, `≤${q3?.toFixed(1)} (Q3)`, `> Q3`];
+    counts = [bands.Q1, bands.Q2, bands.Q3, bands.Q4];
+    colors = ['#ff4d6a','#e8ff47','#47c8ff','#4dffb4'];
+  }
+
+  window.CHARTS[canvasId] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data:            counts,
+        backgroundColor: colors,
+        borderColor:     '#0b0c0f',
+        borderWidth:      2,
+      }]
+    },
+    options: {
+      cutout: '60%',
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { labels: { color: '#6b7494', font: { family: "'Space Mono'", size: 10 } } },
+        tooltip: {
+          backgroundColor: '#13151a',
+          titleColor: '#e8ff47',
+          bodyColor:  '#d8dde8',
+          titleFont: { family: "'Space Mono'" },
+          bodyFont:  { family: "'Space Mono'" },
+          callbacks: {
+            label: ctx => {
+              const pct = ((ctx.parsed / data.length) * 100).toFixed(1);
+              return ` ${ctx.label}: ${ctx.parsed} rows (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
+  document.getElementById('doughnutPlaceholder').style.display = 'none';
+  document.getElementById(canvasId).style.display = 'block';
+}
+
+/* ── PART B: STATISTICAL ANALYSIS FUNCTIONS ─────────────────── */
+
+function variance(arr) {
+  const clean = arr.filter(v => typeof v === 'number' && isFinite(v));
+  if (!clean.length) return 0;
+  const mu    = s2Mean(clean);
+  const sumSq = clean.reduce((s, x) => s + (x - mu) ** 2, 0);
+  return Math.round((sumSq / clean.length) * 100) / 100;
+}
+
+function stdDev(arr) {
+  return Math.round(Math.sqrt(variance(arr)) * 100) / 100;
+}
+
+function pearsonCorr(x, y) {
+  // Filter to pairs where both are finite numbers
+  const pairs = x.map((v, i) => [v, y[i]])
+                  .filter(([a, b]) => typeof a === 'number' && isFinite(a) &&
+                                      typeof b === 'number' && isFinite(b));
+  if (pairs.length < 2) return 0;
+  const px = pairs.map(p => p[0]), py = pairs.map(p => p[1]);
+  const mx = s2Mean(px), my = s2Mean(py);
+  let num = 0, denomX = 0, denomY = 0;
+  for (const [a, b] of pairs) {
+    const dx = a - mx, dy = b - my;
+    num    += dx * dy;
+    denomX += dx * dx;
+    denomY += dy * dy;
+  }
+  const denom = Math.sqrt(denomX * denomY);
+  if (denom === 0) return 0;
+  return Math.round((num / denom) * 10000) / 10000;
+}
+
+function linearRegression(x, y) {
+  const pairs = x.map((v, i) => [v, y[i]])
+                  .filter(([a, b]) => typeof a === 'number' && isFinite(a) &&
+                                      typeof b === 'number' && isFinite(b));
+  if (pairs.length < 2) return { slope: 0, intercept: 0, rSquared: 0 };
+  const px = pairs.map(p => p[0]), py = pairs.map(p => p[1]);
+  const mx = s2Mean(px), my = s2Mean(py);
+  let num = 0, denom = 0;
+  for (const [a, b] of pairs) {
+    num   += (a - mx) * (b - my);
+    denom += (a - mx) ** 2;
+  }
+  if (denom === 0) return { slope: 0, intercept: Math.round(my * 10000) / 10000, rSquared: 0 };
+  const slope     = Math.round((num / denom) * 10000) / 10000;
+  const intercept = Math.round((my - slope * mx) * 10000) / 10000;
+  const r         = pearsonCorr(px, py);
+  const rSquared  = Math.round(r ** 2 * 10000) / 10000;
+  return { slope, intercept, rSquared };
+}
+
+function fmtStat(n) {
+  if (!isFinite(n)) return '—';
+  if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2) + 'B';
+  if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(2) + 'M';
+  if (Math.abs(n) >= 1e3) return (n/1e3).toFixed(2) + 'K';
+  return n.toFixed ? n.toFixed(2) : String(n);
+}
+
+function renderAnalysis(data, primaryCol, studyCol, attendCol, isStudentMode) {
+  const scores  = data.map(d => d.score);
+  const hours   = data.map(d => d.studyHours);
+  const attend  = data.map(d => d.attendance);
+
+  const finiteScores = scores.filter(v => isFinite(v));
+  const minScore = finiteScores.length ? Math.min(...finiteScores) : 0;
+  const maxScore = finiteScores.length ? Math.max(...finiteScores) : 0;
+
+  document.getElementById('an').textContent        = data.length;
+  document.getElementById('aMin').textContent      = fmtStat(minScore);
+  document.getElementById('aMax').textContent      = fmtStat(maxScore);
+  document.getElementById('aRange').textContent    = fmtStat(maxScore - minScore);
+  document.getElementById('aVariance').textContent = fmtStat(variance(finiteScores));
+  document.getElementById('aStdDev').textContent   = fmtStat(stdDev(finiteScores));
+
+  // Update tile heading for non-student mode
+  const descTile = document.querySelector('.analysis-tile:nth-child(1) h4');
+  if (descTile) descTile.textContent = isStudentMode
+    ? 'Descriptive Statistics'
+    : `Stats · ${primaryCol || 'Primary Col'}`;
+
+  const r1 = pearsonCorr(hours.filter((_,i)  => isFinite(hours[i]) && hours[i] !== 0),
+                          scores.filter((_,i) => isFinite(hours[i]) && hours[i] !== 0));
+  const r2 = pearsonCorr(attend.filter((_,i)  => isFinite(attend[i]) && attend[i] !== 0),
+                          scores.filter((_,i) => isFinite(attend[i]) && attend[i] !== 0));
+
+  // Recompute properly (zip-filter together)
+  const r1c = pearsonCorr(
+    data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0).map(d => d.studyHours),
+    data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0).map(d => d.score)
+  );
+  const r2c = pearsonCorr(
+    data.filter(d => isFinite(d.attendance) && d.attendance !== 0).map(d => d.attendance),
+    data.filter(d => isFinite(d.attendance) && d.attendance !== 0).map(d => d.score)
+  );
+
+  function interpCorr(r) {
+    const strength  = Math.abs(r) >= 0.7 ? 'Strong' : Math.abs(r) >= 0.4 ? 'Moderate' : 'Weak';
+    const direction = r > 0 ? 'Positive' : 'Negative';
+    return `${strength} ${direction}`;
+  }
+
+  const col2Label = isStudentMode ? 'Study Hours' : (studyCol  || 'Col 2');
+  const col3Label = isStudentMode ? 'Attendance'  : (attendCol || 'Col 3');
+
+  const corrTile = document.querySelector('.analysis-tile:nth-child(2) h4');
+  if (corrTile) corrTile.textContent = 'Correlation Analysis';
+  const kLabels = document.querySelectorAll('.analysis-tile:nth-child(2) .kv-list .k');
+  if (kLabels[0]) kLabels[0].textContent = `Pearson r (${col2Label}→primary)`;
+  if (kLabels[2]) kLabels[2].textContent = `Pearson r (${col3Label}→primary)`;
+
+  document.getElementById('rPearson').textContent  = r1c;
+  document.getElementById('rInterp').textContent   = interpCorr(r1c);
+  document.getElementById('rPearson2').textContent = r2c;
+  document.getElementById('rInterp2').textContent  = interpCorr(r2c);
+  document.getElementById('rStronger').textContent = Math.abs(r1c) >= Math.abs(r2c) ? col2Label : col3Label;
+  const bothPos = r1c > 0 && r2c > 0, bothNeg = r1c < 0 && r2c < 0;
+  document.getElementById('rDirection').textContent = bothPos ? 'Both positive' : bothNeg ? 'Both negative' : 'Mixed';
+
+  // Regression: tertiary col → primary
+  const regPairs = data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0);
+  const reg = linearRegression(regPairs.map(d => d.studyHours), regPairs.map(d => d.score));
+  const midX = s2Mean(regPairs.map(d => d.studyHours));
+  const predictAt = Math.round(midX);
+
+  document.getElementById('regEquation').textContent  = `y = ${reg.slope}·x + ${reg.intercept}`;
+  document.getElementById('regSlope').textContent     = reg.slope;
+  document.getElementById('regIntercept').textContent = reg.intercept;
+  document.getElementById('regR2').textContent        = reg.rSquared;
+  document.getElementById('regInterp').textContent    =
+    reg.rSquared >= 0.9 ? 'Excellent fit' : reg.rSquared >= 0.7 ? 'Good fit' : 'Moderate fit';
+  document.getElementById('regPredict').textContent   =
+    fmtStat(reg.slope * predictAt + reg.intercept) + ` (x=${predictAt})`;
+
+  const regKLabels = document.querySelectorAll('.analysis-tile:nth-child(3) .kv-list .k');
+  if (regKLabels[5]) regKLabels[5].textContent = `Predicted @mean x`;
+}
+
+function renderInsights(data, primaryCol, studyCol, attendCol, isStudentMode) {
+  const scores  = data.map(d => d.score).filter(isFinite);
+  const meanScore = s2Mean(scores);
+  const minScore  = Math.min(...scores);
+  const maxScore  = Math.max(...scores);
+
+  const r1 = pearsonCorr(
+    data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0).map(d => d.studyHours),
+    data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0).map(d => d.score)
+  );
+  const r2 = pearsonCorr(
+    data.filter(d => isFinite(d.attendance) && d.attendance !== 0).map(d => d.attendance),
+    data.filter(d => isFinite(d.attendance) && d.attendance !== 0).map(d => d.score)
+  );
+  const col2Label = isStudentMode ? 'study hours' : (studyCol  || 'secondary column');
+  const col3Label = isStudentMode ? 'attendance'  : (attendCol || 'tertiary column');
+  const stronger  = Math.abs(r1) >= Math.abs(r2) ? col2Label : col3Label;
+  const strongerR = Math.abs(r1) >= Math.abs(r2) ? r1 : r2;
+
+  const regPairs = data.filter(d => isFinite(d.studyHours) && d.studyHours !== 0);
+  const reg = linearRegression(regPairs.map(d => d.studyHours), regPairs.map(d => d.score));
+  const midX      = s2Mean(regPairs.map(d => d.studyHours));
+  const predictAt = Math.round(midX);
+  const predicted = fmtStat(reg.slope * predictAt + reg.intercept);
+
+  const passRate = isStudentMode
+    ? Math.round((data.filter(d => d.score >= 60).length / data.length) * 100)
+    : null;
+
+  const pCol = primaryCol || 'primary column';
+
+  let narrative = `
+    <strong>${data.length.toLocaleString()}</strong> records loaded.
+    The <span class="highlight">${pCol}</span> column ranges from
+    <span class="highlight">${fmtStat(minScore)}</span> to
+    <span class="highlight">${fmtStat(maxScore)}</span>
+    (mean: <span class="highlight">${fmtStat(meanScore)}</span>,
+    σ = <span class="highlight">${fmtStat(stdDev(scores))}</span>).`;
+
+  if (passRate !== null) {
+    narrative += `
+    Pass rate (score ≥ 60): <span class="highlight">${passRate}%</span>.`;
+  }
+
+  if (isFinite(strongerR) && strongerR !== 0) {
+    narrative += `
+    Of the two secondary predictors, <span class="highlight">${stronger}</span>
+    has the stronger Pearson correlation with <span class="highlight">${pCol}</span>
+    (r = <span class="highlight">${strongerR}</span>).`;
+  }
+
+  if (isFinite(reg.rSquared) && reg.rSquared > 0) {
+    narrative += `
+    The linear regression model (R² = <span class="highlight">${reg.rSquared}</span>)
+    predicts <span class="highlight">${predicted}</span>
+    for the mean input value of <span class="highlight">${fmtStat(midX)}</span>.`;
+  }
+
+  document.getElementById('insightsBody').innerHTML = `<p class="insight-text">${narrative}</p>`;
+}
+
+/* ══ END STUDENT 2 CONTRIBUTION ZONE ══ */
+
+</script>
+</body>
+</html>

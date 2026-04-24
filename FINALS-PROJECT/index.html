@@ -1192,6 +1192,202 @@
     margin-top: 16px;
     display: none;
   }
+
+  /* ─── DASHBOARD ACTION BAR ─── */
+  #dash-action-bar {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    flex-wrap: wrap;
+  }
+
+  .dash-file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dash-file-info .file-icon { font-size: 14px; }
+
+  .dash-file-name {
+    color: var(--accent);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
+  }
+
+  .btn-new-file {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .btn-new-file:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(71,200,255,.06); }
+
+  /* ─── EXPORT DROPDOWN ─── */
+  .export-wrap { position: relative; }
+
+  .btn-export {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px;
+    background: var(--accent);
+    color: #000;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  .btn-export:hover { opacity: .85; }
+
+  .export-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    z-index: 200;
+    min-width: 200px;
+  }
+  .export-dropdown.open { display: block; }
+
+  .export-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background .1s;
+    border-bottom: 1px solid var(--border);
+  }
+  .export-item:last-child { border-bottom: none; }
+  .export-item:hover { background: rgba(255,255,255,.03); color: var(--text); }
+
+  .export-item-icon { font-size: 16px; line-height: 1; }
+
+  .export-item-label { font-weight: 700; color: var(--text); display: block; margin-bottom: 2px; }
+  .export-item-desc  { color: var(--text-dim); font-size: 10px; }
+
+  /* ─── LOAD NEW FILE CONFIRM OVERLAY ─── */
+  .confirm-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.65);
+    z-index: 999;
+    place-items: center;
+  }
+  .confirm-overlay.open { display: grid; }
+
+  .confirm-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 28px 32px;
+    max-width: 380px;
+    width: 90%;
+    animation: fadeUp .2s ease both;
+  }
+
+  .confirm-box h3 {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .confirm-box p {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .confirm-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .confirm-cancel:hover { border-color: var(--text-dim); color: var(--text); }
+
+  .confirm-ok {
+    background: var(--danger);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  .confirm-ok:hover { opacity: .85; }
+
+  /* ─── EXPORT TOAST ─── */
+  #export-toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4);
+  }
+  #export-toast.show { opacity: 1; }
+  #export-toast .toast-icon { color: var(--accent); font-size: 14px; }
 </style>
 </head>
 <body>
@@ -1234,8 +1430,66 @@
       </div>
     </div>
 
+    <!-- CONFIRM OVERLAY -->
+    <div class="confirm-overlay" id="confirm-overlay">
+      <div class="confirm-box">
+        <h3>⚠ Load a new file?</h3>
+        <p>This will clear the current dataset and all analysis. Any unsaved data will be lost.</p>
+        <div class="confirm-actions">
+          <button class="confirm-cancel" id="confirm-cancel-btn">Cancel</button>
+          <button class="confirm-ok" id="confirm-ok-btn">Yes, load new file</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT TOAST -->
+    <div id="export-toast"><span class="toast-icon">✓</span><span id="export-toast-msg">File saved!</span></div>
+
     <!-- DASHBOARD -->
     <div id="dashboard">
+
+      <!-- DASHBOARD ACTION BAR -->
+      <div id="dash-action-bar">
+        <div class="dash-file-info">
+          <span class="file-icon">📄</span>
+          <span class="dash-file-name" id="dash-file-name">—</span>
+          <span id="dash-file-meta" style="color:var(--muted)"></span>
+        </div>
+        <button class="btn-new-file" id="btn-new-file">↩ Load New File</button>
+        <div class="export-wrap" id="export-wrap">
+          <button class="btn-export" id="btn-export-toggle">↓ Export Data ▾</button>
+          <div class="export-dropdown" id="export-dropdown">
+            <div class="export-item" id="export-csv">
+              <span class="export-item-icon">📊</span>
+              <span>
+                <span class="export-item-label">Save as CSV</span>
+                <span class="export-item-desc">All rows as comma-separated values</span>
+              </span>
+            </div>
+            <div class="export-item" id="export-filtered-csv">
+              <span class="export-item-icon">🔍</span>
+              <span>
+                <span class="export-item-label">Save Filtered View as CSV</span>
+                <span class="export-item-desc">Only current filtered / sorted rows</span>
+              </span>
+            </div>
+            <div class="export-item" id="export-json">
+              <span class="export-item-icon">{ }</span>
+              <span>
+                <span class="export-item-label">Save as JSON</span>
+                <span class="export-item-desc">Full dataset as structured JSON</span>
+              </span>
+            </div>
+            <div class="export-item" id="export-report">
+              <span class="export-item-icon">📋</span>
+              <span>
+                <span class="export-item-label">Save Analysis Report</span>
+                <span class="export-item-desc">Statistics summary as JSON</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- META CARDS -->
       <div class="section-header">
@@ -1710,6 +1964,9 @@ function renderDashboard(filename) {
 
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('upload-zone').style.display = 'none';
+
+  /* Show the action bar (new file + export) */
+  showDashActionBar(filename);
 
   /* ── Student 2 integration hook ── */
   onDataReady(DS.rows, DS.headers);
@@ -2732,6 +2989,190 @@ function handleFileSelect(input) {
   const file = input.files[0];
   if (file) loadDataset(file);
 }
+
+/* ═══════════════════════════════════════════════
+   LOAD NEW FILE & EXPORT FEATURES
+   ═══════════════════════════════════════════════ */
+
+/* ── Show/hide the dashboard action bar when dashboard is ready ── */
+function showDashActionBar(filename) {
+  const bar = document.getElementById('dash-action-bar');
+  const nameEl = document.getElementById('dash-file-name');
+  const metaEl = document.getElementById('dash-file-meta');
+  if (!bar) return;
+  nameEl.textContent = filename;
+  if (window.DS) {
+    metaEl.textContent = `· ${window.DS.rowCount.toLocaleString()} rows · ${window.DS.colCount} cols`;
+  }
+  bar.style.display = 'flex';
+}
+
+/* ── Load New File flow ── */
+function promptLoadNewFile() {
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-overlay').classList.remove('open');
+}
+
+function resetToUpload() {
+  closeConfirm();
+
+  // Destroy all charts
+  if (window.CHARTS) {
+    Object.keys(window.CHARTS).forEach(id => {
+      if (window.CHARTS[id]) { window.CHARTS[id].destroy(); delete window.CHARTS[id]; }
+    });
+  }
+
+  // Clear DS
+  window.DS  = null;
+  window.SC  = null;
+  window.RT  = null;
+  window.AFS = null;
+  window.RST = null;
+  window.S2  = {};
+
+  // Hide dashboard, show upload
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('dash-action-bar').style.display = 'none';
+  document.getElementById('upload-zone').style.display = '';
+  document.getElementById('error-box').style.display = 'none';
+
+  // Reset file input so the same file can be re-selected
+  const fi = document.getElementById('file-input');
+  if (fi) fi.value = '';
+}
+
+/* ── Rows-to-CSV helper ── */
+function rowsToCSV(rows) {
+  if (!rows || !rows.length) return '';
+  const headers = Object.keys(rows[0]);
+  const escape  = v => {
+    const s = v === null || v === undefined ? '' : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [headers.map(escape).join(',')];
+  for (const row of rows) {
+    lines.push(headers.map(h => escape(row[h])).join(','));
+  }
+  return lines.join('\n');
+}
+
+/* ── Trigger browser download ── */
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+/* ── Show toast notification ── */
+function showExportToast(msg) {
+  const toast   = document.getElementById('export-toast');
+  const msgEl   = document.getElementById('export-toast-msg');
+  msgEl.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 2800);
+}
+
+/* ── Export: full CSV ── */
+function exportCSV() {
+  if (!window.DS) return;
+  const csv = rowsToCSV(window.DS.rows);
+  const base = window.DS.filename.replace(/\.[^.]+$/, '');
+  downloadFile(csv, `${base}_export.csv`, 'text/csv;charset=utf-8;');
+  showExportToast(`Saved: ${base}_export.csv`);
+}
+
+/* ── Export: filtered/current table view as CSV ── */
+function exportFilteredCSV() {
+  if (!window.DS) return;
+  // Try to get current table state from RT controller
+  let rows = window.DS.rows;
+  if (window.RT) {
+    const state = window.RT.getState();
+    // Re-derive the filtered+sorted rows from DS using RT state
+    let filtered = window.DS.rows;
+    if (state.isFiltered && window.AFS && typeof window.AFS.getCurrentRows === 'function') {
+      filtered = window.AFS.getCurrentRows();
+    }
+    if (state.sortCol) {
+      const dir = state.sortDir === 'asc' ? 1 : -1;
+      filtered = [...filtered].sort((a, b) => {
+        const av = a[state.sortCol], bv = b[state.sortCol];
+        if (av == null) return 1; if (bv == null) return -1;
+        if (typeof av === 'number' && typeof bv === 'number') return dir * (av - bv);
+        return dir * String(av).localeCompare(String(bv), undefined, { numeric: true });
+      });
+    }
+    rows = filtered;
+  }
+  const csv  = rowsToCSV(rows);
+  const base = window.DS.filename.replace(/\.[^.]+$/, '');
+  downloadFile(csv, `${base}_filtered.csv`, 'text/csv;charset=utf-8;');
+  showExportToast(`Saved: ${base}_filtered.csv (${rows.length} rows)`);
+}
+
+/* ── Export: full JSON ── */
+function exportJSON() {
+  if (!window.DS) return;
+  const payload = JSON.stringify(window.DS.rows, null, 2);
+  const base    = window.DS.filename.replace(/\.[^.]+$/, '');
+  downloadFile(payload, `${base}_data.json`, 'application/json');
+  showExportToast(`Saved: ${base}_data.json`);
+}
+
+/* ── Export: analysis report JSON ── */
+function exportReport() {
+  if (!window.DS) return;
+  const DS = window.DS;
+  const scores = DS.rows.map(r => r.score || r.Score || r.SCORE).filter(v => typeof v === 'number' && isFinite(v));
+  const report = {
+    meta: {
+      filename  : DS.filename,
+      exportedAt: new Date().toISOString(),
+      rowCount  : DS.rowCount,
+      colCount  : DS.colCount,
+    },
+    columnProfile: DS.columns,
+    numericStats : DS.stats,
+    preview      : DS.preview,
+  };
+  const base = DS.filename.replace(/\.[^.]+$/, '');
+  downloadFile(JSON.stringify(report, null, 2), `${base}_report.json`, 'application/json');
+  showExportToast(`Saved: ${base}_report.json`);
+}
+
+/* ── Wire up buttons after DOM is ready ── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btn-new-file').addEventListener('click', promptLoadNewFile);
+  document.getElementById('confirm-cancel-btn').addEventListener('click', closeConfirm);
+  document.getElementById('confirm-ok-btn').addEventListener('click', resetToUpload);
+  document.getElementById('confirm-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('confirm-overlay')) closeConfirm();
+  });
+
+  // Export dropdown toggle
+  const exportBtn  = document.getElementById('btn-export-toggle');
+  const exportDrop = document.getElementById('export-dropdown');
+  exportBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    exportDrop.classList.toggle('open');
+  });
+  document.addEventListener('click', () => exportDrop.classList.remove('open'));
+
+  document.getElementById('export-csv').addEventListener('click',          () => { exportCSV();         exportDrop.classList.remove('open'); });
+  document.getElementById('export-filtered-csv').addEventListener('click', () => { exportFilteredCSV(); exportDrop.classList.remove('open'); });
+  document.getElementById('export-json').addEventListener('click',         () => { exportJSON();        exportDrop.classList.remove('open'); });
+  document.getElementById('export-report').addEventListener('click',       () => { exportReport();      exportDrop.classList.remove('open'); });
+});
 
 /* ═══════════════════════════════════════════════════════════════════
    ZONE 2 · STUDENT 2 — Visualizations + Deep Analysis Engine

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Data Engine</title>
+<title>World Population Data Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -671,8 +671,16 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 12px;
+    margin-top: 20px;
+    margin-bottom: 4px;
     flex-wrap: wrap;
+  }
+
+  /* Separation between the render-table block (incl. pagination) and the
+     numeric statistics section below. Keeps them visually distinct at all
+     viewport sizes without breaking the table↔pagination association. */
+  #rt-container {
+    margin-bottom: 48px;
   }
 
   .rt-page-btn {
@@ -1354,7 +1362,7 @@
 
   <header>
     <div class="logo-mark">DE</div>
-    <h1>Data <span>Engine</span></h1>
+    <h1>World Population <span>Data Center </span></h1>
     <span class="branch-tag">⎇ feature/data-engine</span>
   </header>
 
@@ -1534,12 +1542,12 @@
 
 
 
-      <!-- window.DS INSPECTOR -->
-      <div class="section-header" style="margin-top:40px">
+      <!-- window.DS INSPECTOR — hidden; window.DS itself is preserved -->
+      <div class="section-header" style="display:none">
         <h3>window.DS</h3>
         <span class="pill">live object</span>
       </div>
-      <div class="ds-inspector">
+      <div class="ds-inspector" style="display:none">
         <pre id="ds-pre"></pre>
       </div>
 
@@ -1884,8 +1892,8 @@ function renderDashboard(filename) {
     </tr>`;
   }).join('');
 
-  /* window.DS inspector */
-  document.getElementById('ds-pre').innerHTML = renderDSInspector(DS);
+  /* window.DS inspector is hidden — skip rendering it */
+  // document.getElementById('ds-pre').innerHTML = renderDSInspector(DS);
 
   /* renderSummaryCards — 4 stat cards (WB-dataset aware) */
   window.SC  = renderSummaryCards(DS.rows, {
@@ -2047,22 +2055,10 @@ function renderSummaryCards(data, options = {}) {
     return stringCols[0] || allHeaders[0];
   }
 
-  function bestSeriesCol() {
-    if (options.seriesCol) return options.seriesCol;
-    // WB dataset: "Series Name" is the metric dimension
-    const SERIES_HINTS = ['series name', 'series', 'indicator', 'metric', 'variable', 'measure'];
-    for (const hint of SERIES_HINTS) {
-      const m = allHeaders.find(h => h.toLowerCase().includes(hint));
-      if (m) return m;
-    }
-    return stringCols[1] || stringCols[0] || allHeaders[1];
-  }
-
   /* ── mutable config ── */
   let cfg = {
-    primaryCol    : options.primaryCol    || bestYearCol(),
+    primaryCol    : options.primaryCol || bestYearCol(),
     nameCol       : bestNameCol(),
-    seriesCol     : bestSeriesCol(),
     passThreshold : options.passThreshold ?? 70,
   };
 
@@ -2074,7 +2070,7 @@ function renderSummaryCards(data, options = {}) {
       .filter(v => typeof v === 'number' && isFinite(v));
 
     // Card 1: mean value
-    const mean = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+    const mean   = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
     const minVal = vals.length ? Math.min(...vals) : null;
     const maxVal = vals.length ? Math.max(...vals) : null;
 
@@ -2087,25 +2083,23 @@ function renderSummaryCards(data, options = {}) {
       }
     }
     const peakCountry = peakRow ? (peakRow[c.nameCol] ?? '—') : '—';
-    const peakSeries  = peakRow ? (peakRow[c.seriesCol] ?? '—') : '—';
 
-    // Card 3: above-threshold rate (analogous to "pass rate")
+    // Card 3: above-threshold rate
     const aboveCount = vals.filter(v => v >= c.passThreshold).length;
     const aboveRate  = vals.length ? (aboveCount / vals.length) * 100 : null;
 
-    // Card 4: unique series count + non-null coverage in the primary year col
-    const uniqueSeries  = new Set(rows.map(r => r[c.seriesCol]).filter(Boolean)).size;
+    // Card 4: unique countries + non-null coverage in the primary year col
     const uniqueCountries = new Set(rows.map(r => r[c.nameCol]).filter(Boolean)).size;
-    const nonNullCount  = vals.length;
-    const totalRows     = rows.length;
-    const coveragePct   = totalRows > 0 ? (nonNullCount / totalRows) * 100 : 0;
+    const nonNullCount    = vals.length;
+    const totalRows       = rows.length;
+    const coveragePct     = totalRows > 0 ? (nonNullCount / totalRows) * 100 : 0;
 
     return {
       mean, minVal, maxVal,
       peakVal: peakVal === -Infinity ? null : peakVal,
-      peakCountry, peakSeries,
+      peakCountry,
       aboveRate, aboveCount, totalVals: vals.length,
-      uniqueSeries, uniqueCountries, coveragePct, totalRows, nonNullCount,
+      uniqueCountries, coveragePct, totalRows, nonNullCount,
     };
   }
 
@@ -2144,16 +2138,18 @@ function renderSummaryCards(data, options = {}) {
 
     const peakCountryLabel = String(stats.peakCountry).slice(0, 22) +
       (String(stats.peakCountry).length > 22 ? '…' : '');
-    const peakSeriesLabel  = String(stats.peakSeries).slice(0, 30) +
-      (String(stats.peakSeries).length > 30 ? '…' : '');
 
-    /* remap selects — year cols only for primary; string cols for name/series */
-    const yearOpts = (sel) => yearCols.map(h =>
+    /* remap selects — year cols only for primary; "Country Name" / "Country Code" only for name */
+    const yearOpts    = (sel) => yearCols.map(h =>
       `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h.slice(0,4))}</option>`
     ).join('');
-    const strOpts  = (sel) => allHeaders.map(h =>
-      `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h)}</option>`
-    ).join('');
+    const countryOpts = (sel) => allHeaders
+      .filter(h => /country\s*(name|code)/i.test(h))
+      .map(h => {
+        const label = /name/i.test(h) ? 'Country Name' : 'Country Code';
+        return `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${label}</option>`;
+      })
+      .join('');
 
     mount.innerHTML = `
       <!-- ── Remap bar ── -->
@@ -2162,10 +2158,7 @@ function renderSummaryCards(data, options = {}) {
         <select class="sc-remap-select" id="sc-primary-col">${yearOpts(cfg.primaryCol)}</select>
         <span class="sc-remap-sep">|</span>
         <span>Country col:</span>
-        <select class="sc-remap-select" id="sc-name-col">${strOpts(cfg.nameCol)}</select>
-        <span class="sc-remap-sep">|</span>
-        <span>Series col:</span>
-        <select class="sc-remap-select" id="sc-series-col">${strOpts(cfg.seriesCol)}</select>
+        <select class="sc-remap-select" id="sc-name-col">${countryOpts(cfg.nameCol)}</select>
         <span class="sc-remap-sep">|</span>
         <span>Threshold ≥</span>
         <input type="number" id="sc-pass-thresh"
@@ -2178,11 +2171,7 @@ function renderSummaryCards(data, options = {}) {
       <!-- ── 4 Cards ── -->
       <div class="sc-grid">
 
-        <!-- CARD 1 · Mean Value (primary year column)
-             Variable : primaryCol  →  e.g. "2020 [YR2020]"
-             Significance : Average of all numeric observations for the
-             selected year across every country × series row in the loaded
-             dataset. Gives a distributional anchor for the chosen year.  -->
+        <!-- CARD 1 · Mean Value -->
         <div class="sc-card" style="--sc-color: var(--accent)">
           <span class="sc-col-badge" title="${esc(cfg.primaryCol)}">${esc(yearLabel)}</span>
           <span class="sc-icon">📊</span>
@@ -2194,31 +2183,18 @@ function renderSummaryCards(data, options = {}) {
           </div>
         </div>
 
-        <!-- CARD 2 · Peak Record
-             Variables : primaryCol (value), nameCol (Country Name),
-                         seriesCol  (Series Name)
-             Significance : Identifies the country + metric combination
-             that recorded the single highest value in the selected year.
-             Useful for spotting dominant economies (e.g. China/India for
-             population totals) or outlier metrics.  -->
+        <!-- CARD 2 · Peak Record -->
         <div class="sc-card" style="--sc-color: #c084fc">
           <span class="sc-col-badge" title="${esc(cfg.nameCol)}">${esc(yearLabel)} peak</span>
           <span class="sc-icon">🌍</span>
           <div class="sc-metric">Peak Record · ${esc(yearLabel)}</div>
           <div class="sc-value" style="font-size:${peakCountryLabel.length > 16 ? '15px' : '20px'}">${esc(peakCountryLabel)}</div>
           <div class="sc-sub">
-            value: <strong>${fshort(stats.peakVal)}</strong><br/>
-            series: <em title="${esc(stats.peakSeries)}">${esc(peakSeriesLabel)}</em>
+            value: <strong>${fshort(stats.peakVal)}</strong>
           </div>
         </div>
 
-        <!-- CARD 3 · Above-Threshold Rate
-             Variables : primaryCol (values), passThreshold (user-set, default 70)
-             Significance : Re-interprets "pass rate" as the share of data
-             rows whose selected-year value exceeds the threshold. At 70
-             this captures rows where life expectancy > 70 years — a widely
-             used development benchmark. User can adjust threshold to probe
-             other distributions (e.g. >2.1 for fertility replacement rate).  -->
+        <!-- CARD 3 · Above-Threshold Rate -->
         <div class="sc-card" style="--sc-color: ${threshColour}">
           <span class="sc-col-badge" title="≥ ${cfg.passThreshold}">≥ ${cfg.passThreshold}</span>
           <span class="sc-icon">✅</span>
@@ -2231,22 +2207,14 @@ function renderSummaryCards(data, options = {}) {
           ${threshDelta}
         </div>
 
-        <!-- CARD 4 · Dataset Coverage
-             Variables : seriesCol (Series Name), nameCol (Country Name),
-                         primaryCol (non-null count)
-             Significance : The WB dataset is wide-format (one row per
-             country × series) with sparse future-year projections. This
-             card reports unique series and countries in the loaded slice,
-             plus the % of primaryCol values that are non-null — a direct
-             measure of data completeness for the chosen year.  -->
+        <!-- CARD 4 · Dataset Coverage -->
         <div class="sc-card" style="--sc-color: var(--accent2)">
-          <span class="sc-col-badge" title="${esc(cfg.seriesCol)}">coverage</span>
+          <span class="sc-col-badge">coverage</span>
           <span class="sc-icon">📋</span>
           <div class="sc-metric">Dataset Coverage · ${esc(yearLabel)}</div>
           <div class="sc-value">${fpct(stats.coveragePct)}</div>
           <div class="sc-sub">
-            <strong>${stats.uniqueSeries.toLocaleString()}</strong> series ×
-            <strong>${stats.uniqueCountries.toLocaleString()}</strong> countries<br/>
+            <strong>${stats.uniqueCountries.toLocaleString()}</strong> unique countries<br/>
             ${stats.nonNullCount.toLocaleString()} / ${stats.totalRows.toLocaleString()} non-null in year col
           </div>
         </div>
@@ -2260,9 +2228,6 @@ function renderSummaryCards(data, options = {}) {
     });
     mount.querySelector('#sc-name-col').addEventListener('change', e => {
       cfg.nameCol = e.target.value; render();
-    });
-    mount.querySelector('#sc-series-col').addEventListener('change', e => {
-      cfg.seriesCol = e.target.value; render();
     });
     mount.querySelector('#sc-pass-thresh').addEventListener('change', e => {
       const v = parseFloat(e.target.value);
@@ -2362,12 +2327,9 @@ function resetTable(ds) {
     if (window.RT && typeof window.RT.setSearchTerm === 'function') {
       window.RT.setSearchTerm('');
     } else {
-      // fallback: fire input event
+      // fallback: directly clear the input value (no event dispatch)
       const searchInput = document.querySelector('#rt-search-input');
-      if (searchInput) {
-        searchInput.value = '';
-        searchInput.dispatchEvent(new Event('input'));
-      }
+      if (searchInput) searchInput.value = '';
     }
 
     // 4. Hide the reset bar — back to baseline
@@ -2516,7 +2478,7 @@ function applyFilterSort(ds, options = {}) {
     <div class="afs-top">
       <span class="afs-label">Filter by</span>
       <select class="afs-select" id="afs-name-col">
-        ${ds.headers.map(h => `<option value="${esc(h)}" ${h === nameCol ? 'selected' : ''}>${esc(h)}</option>`).join('')}
+        ${ds.headers.filter(h => !/^\d{4}/.test(h)).map(h => `<option value="${esc(h)}" ${h === nameCol ? 'selected' : ''}>${esc(h)}</option>`).join('')}
       </select>
       <input class="afs-name-input" id="afs-filter-input"
              type="text" placeholder="e.g. Afghanistan, GDP…"
@@ -2528,6 +2490,7 @@ function applyFilterSort(ds, options = {}) {
           }</button>`
         ).join('')}
       </div>
+      <button class="afs-apply-btn" id="afs-filter-search-btn">⌕ Search</button>
     </div>
     <div class="afs-sort-row">
       <span class="afs-label">Sort by</span>
@@ -2544,7 +2507,7 @@ function applyFilterSort(ds, options = {}) {
       <span class="afs-label">Global search</span>
       <input class="afs-name-input" id="afs-global-search" type="text"
              placeholder="Search all columns…" style="flex:1; min-width:200px;" />
-      <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">searches within filtered results</span>
+      <button class="afs-apply-btn" id="afs-global-search-btn">⌕ Search</button>
     </div>
     <div class="afs-status-bar" id="afs-status"></div>
   `;
@@ -2578,19 +2541,20 @@ function applyFilterSort(ds, options = {}) {
     });
   });
 
-  /* live-filter as user types (debounced 120 ms) */
-  let debounceTimer;
-  filterInput.addEventListener('input', e => {
-    filterVal = e.target.value;
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(runApply, 120);
-  });
-
   applyBtn.addEventListener('click', runApply);
   clearBtn.addEventListener('click', runClear);
+  /* AFS filterInput has NO input/keydown listeners — Apply button is the only trigger */
 
-  /* also allow Enter key */
-  filterInput.addEventListener('keydown', e => { if (e.key === 'Enter') runApply(); });
+  /* ── Filter by Search button — runs AFS filter pipeline ── */
+  panel.querySelector('#afs-filter-search-btn').addEventListener('click', runApply);
+
+  /* ── Global Search button — feeds RT's cross-column search ── */
+  panel.querySelector('#afs-global-search-btn').addEventListener('click', () => {
+    const term = panel.querySelector('#afs-global-search').value;
+    if (window.RT && typeof window.RT.setSearchTerm === 'function') {
+      window.RT.setSearchTerm(term);
+    }
+  });
 
   /* ── core: filter + sort pipeline ── */
   function matchRow(row) {
@@ -2751,6 +2715,7 @@ function renderTable(data, options = {}) {
   mount.innerHTML = `
     <div class="rt-toolbar">
       <input class="rt-search" id="rt-search-input" type="text" placeholder="Search all columns…" />
+      <button class="rt-btn" id="rt-search-btn" style="background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;">⌕ Search</button>
       <div class="rt-col-toggle-wrap">
         <button class="rt-btn" id="rt-col-btn">⊞ Columns</button>
         <div class="rt-col-dropdown" id="rt-col-dropdown"></div>
@@ -2797,14 +2762,13 @@ function renderTable(data, options = {}) {
     colBtn.classList.remove('active');
   });
 
- /* ── search only when Enter is pressed ── */
-mount.querySelector('#rt-search-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    searchTerm = e.target.value.trim().toLowerCase();
+  /* ── search ONLY on button click — no reactive/input/keydown triggers ── */
+  mount.querySelector('#rt-search-btn').addEventListener('click', () => {
+    const si = mount.querySelector('#rt-search-input');
+    searchTerm = si.value.trim().toLowerCase();
     currentPage = 1;
     redraw();
-  }
-});
+  });
 
   /* ── unified pipeline ── */
   /**

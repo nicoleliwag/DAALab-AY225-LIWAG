@@ -329,47 +329,6 @@
   .stats-table tr:last-child td { border-bottom: none; }
   .stats-table tr:hover td { background: rgba(255,255,255,.02); }
 
-  /* ─── PREVIEW TABLE ─── */
-  .preview-scroll {
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-bottom: 40px;
-    animation: fadeUp .4s ease .6s both;
-  }
-
-  .preview-table {
-    border-collapse: collapse;
-    font-family: var(--mono);
-    font-size: 11px;
-    min-width: 600px;
-    width: 100%;
-  }
-
-  .preview-table th {
-    background: var(--surface);
-    color: var(--text-dim);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: .8px;
-    padding: 10px 14px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-
-  .preview-table td {
-    padding: 7px 14px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .preview-table tr:last-child td { border-bottom: none; }
-  .preview-table tr:hover td { background: rgba(255,255,255,.02); }
 
   .null-cell { color: var(--muted); font-style: italic; }
 
@@ -1500,8 +1459,8 @@
 
       <!-- SUMMARY CARDS -->
       <div class="section-header">
-        <h3>Render Summary Cards</h3>
-        <span class="pill">mean score · top scorer · pass rate · avg study hrs</span>
+        <h3>Summary</h3>
+        <span class="pill">mean value · peak record · above-threshold rate · dataset coverage</span>
       </div>
       <div id="sc-container"></div>
 
@@ -1528,24 +1487,13 @@
 
       <!-- FILTER + SORT PANEL -->
       <div class="section-header">
-        <h3>applyFilterSort</h3>
+        <h3>Apply Filter Sort</h3>
         <span class="pill">filter by name · sort by column</span>
       </div>
       <div id="afs-panel">
         <!-- populated by applyFilterSort() after load -->
       </div>
 
-      <!-- PREVIEW -->
-      <div class="section-header">
-        <h3>Data preview</h3>
-        <span class="pill">first 10 rows</span>
-      </div>
-      <div class="preview-scroll">
-        <table class="preview-table">
-          <thead id="preview-thead"></thead>
-          <tbody id="preview-tbody"></tbody>
-        </table>
-      </div>
 
       <!-- NUMERIC STATS -->
       <div class="section-header">
@@ -1573,7 +1521,7 @@
 
       <!-- RENDER TABLE -->
       <div class="section-header" style="margin-top:40px">
-        <h3>renderTable</h3>
+        <h3>Render Table</h3>
         <span class="pill" id="rt-row-pill">—</span>
       </div>
       <!-- Reset bar — shown whenever the table is in a modified state -->
@@ -1745,7 +1693,6 @@ window.DS = null;   // populated by loadDataset()
  *   columns  : Array<{ name, type, nonNull, nullCount, nullPct }>,
  *   headers  : string[],
  *   rows     : object[],         // all rows as plain objects
- *   preview  : object[],         // first 10 rows
  *   stats    : object,           // per-column descriptive stats
  *   loadedAt : ISO string,
  * }
@@ -1908,17 +1855,6 @@ function renderDashboard(filename) {
     </tr>
   `).join('');
 
-  /* Preview */
-  const previewCols = DS.headers.slice(0, 8);   // cap at 8 for readability
-  document.getElementById('preview-thead').innerHTML =
-    '<tr>' + previewCols.map(h => `<th>${esc(h)}</th>`).join('') + '</tr>';
-  document.getElementById('preview-tbody').innerHTML = DS.preview.map(row =>
-    '<tr>' + previewCols.map(h => {
-      const v = row[h];
-      if (v === null || v === undefined || v === '') return `<td class="null-cell">null</td>`;
-      return `<td>${esc(String(v))}</td>`;
-    }).join('') + '</tr>'
-  ).join('');
 
   /* Numeric stats */
   const statCols = Object.keys(DS.stats);
@@ -1950,8 +1886,14 @@ function renderDashboard(filename) {
   /* window.DS inspector */
   document.getElementById('ds-pre').innerHTML = renderDSInspector(DS);
 
-  /* renderSummaryCards — 4 stat cards */
-  window.SC  = renderSummaryCards(DS.rows, { headers: DS.headers });
+  /* renderSummaryCards — 4 stat cards (WB-dataset aware) */
+  window.SC  = renderSummaryCards(DS.rows, {
+    headers: DS.headers,
+    // World Bank dataset: primary "score" metric = Population, total
+    // "name" = Country Name  |  "study hours" → Life Expectancy column
+    // Auto-detection below uses WB-aware hints
+    passThreshold: 70,  // Life expectancy ≥ 70 yrs = "pass" threshold
+  });
 
   /* renderTable — full interactive data table */
   window.RT  = renderTable(DS.rows, { pageSize: 25 });
@@ -2008,23 +1950,53 @@ ${statSample},
 
 /* ── renderSummaryCards ───────────────────────── */
 /**
- * renderSummaryCards(data, options?) — renders 4 domain-aware stat cards:
- *   1. Mean Score       — average of the primary numeric score column
- *   2. Top Scorer       — name + value of the row with the highest score
- *   3. Pass Rate        — % of rows at or above a pass threshold
- *   4. Avg Study Hours  — average of the study hours / time column
+ * renderSummaryCards(data, options?) — renders 4 domain-aware stat cards
+ * aligned to the World Bank Population Dataset (44,812 rows × 95 cols).
  *
- * Column auto-detection: scans header names for semantic hints.
+ * Dataset structure:
+ *   Identifier columns : Country Name, Country Code, Series Name, Series Code
+ *   Value columns      : 1960 [YR1960] … 2050 [YR2050]  (91 year columns, float64)
+ *
+ * ── Variable Mapping ──────────────────────────────────────────────────────
+ *   CARD 1 · Mean Value (primary metric)
+ *     → primaryCol : any year column (default: most recent non-future year)
+ *       Rationale : Year columns are the dataset's only numeric measures.
+ *       The mean across all series/country rows for a given year gives a
+ *       sense of scale for the loaded slice.
+ *
+ *   CARD 2 · Peak Record (top entity)
+ *     → nameCol    : "Country Name"   — identifies geographic entities
+ *     → seriesCol  : "Series Name"    — identifies the metric being measured
+ *       Rationale : The WB dataset is in long format; the "name" is a
+ *       combination of Country + Series. Card shows the country with the
+ *       single highest value in the selected year column.
+ *
+ *   CARD 3 · Above-Threshold Rate
+ *     → primaryCol : same year column as Card 1
+ *     → threshold  : user-adjustable (default 70 — meaningful for life
+ *       expectancy in years, a featured WB series)
+ *       Rationale : "Pass rate" re-interpreted as the share of data rows
+ *       whose selected-year value exceeds the threshold, enabling quick
+ *       percentile inspection.
+ *
+ *   CARD 4 · Series Count / Coverage
+ *     → seriesCol  : "Series Name"
+ *       Rationale : Unlike a student dataset where "study hours" is a
+ *       separate numeric column, the WB dataset's second dimension is
+ *       the Series Name (metric type). Card 4 reports unique series and
+ *       non-null coverage — a dataset health metric.
+ * ─────────────────────────────────────────────────────────────────────────
+ *
  * All column mappings are overridable via a remap bar in the UI
  * or via the options object.
  *
  * @param {object[]} data          - Array of row objects (e.g. window.DS.rows)
  * @param {object}   [options]
  *   @param {string}   [options.target]        - CSS selector (default '#sc-container')
- *   @param {string}   [options.scoreCol]      - Column for mean/top/pass calculations
- *   @param {string}   [options.nameCol]       - Column for "top scorer" label
- *   @param {string}   [options.studyCol]      - Column for avg study hours
- *   @param {number}   [options.passThreshold] - Value >= this is a pass (default 50)
+ *   @param {string}   [options.primaryCol]    - Year column for mean/peak/threshold (auto: latest year)
+ *   @param {string}   [options.nameCol]       - Country/entity label column (auto: 'Country Name')
+ *   @param {string}   [options.seriesCol]     - Series/metric name column (auto: 'Series Name')
+ *   @param {number}   [options.passThreshold] - Value >= this counts as "above threshold" (default 70)
  *   @param {string[]} [options.headers]       - All column names (for remap dropdowns)
  *
  * Returns a controller:
@@ -2038,73 +2010,101 @@ function renderSummaryCards(data, options = {}) {
 
   const allHeaders = options.headers || Object.keys(data[0]);
 
-  /* ── column auto-detection ── */
-  const SCORE_HINTS  = ['score', 'grade', 'mark', 'result', 'gpa', 'rating', 'points', 'exam', 'test', 'math', 'reading', 'writing', 'performance'];
-  const NAME_HINTS   = ['name', 'student', 'person', 'id', 'country', 'title', 'label', 'series'];
-  const STUDY_HINTS  = ['study', 'hour', 'time', 'hrs', 'duration', 'practice', 'prep', 'learning'];
+  /* ── column classification ── */
+  // Year columns: match pattern "YYYY [YRYYYY]" or plain "YYYY"
+  const yearCols = allHeaders.filter(h => /^\d{4}/.test(h));
 
-  function bestCol(hints, fallback) {
-    const lower = allHeaders.map(h => ({ h, l: h.toLowerCase() }));
-    for (const hint of hints) {
-      const m = lower.find(({ l }) => l.includes(hint));
-      if (m) return m.h;
-    }
-    return fallback;
-  }
-
-  /* numeric columns only for score/study */
+  // Numeric columns (non-year, by sampling)
   const numericCols = allHeaders.filter(h => {
-    const sample = data.slice(0, 100).map(r => r[h]).filter(v => v !== null && v !== undefined && v !== '');
+    const sample = data.slice(0, 80).map(r => r[h]).filter(v => v !== null && v !== undefined && v !== '');
     return sample.length > 0 && sample.filter(v => typeof v === 'number').length / sample.length > 0.6;
   });
 
-  const stringCols = allHeaders.filter(h => !numericCols.includes(h));
+  const stringCols = allHeaders.filter(h => !numericCols.includes(h) && !yearCols.includes(h));
 
-  /* mutable config */
+  /* ── column auto-detection helpers ── */
+  // WB-aware hints: prioritise exact semantic matches first
+  function bestYearCol() {
+    // Pick the most recent historical year column with reasonable non-null coverage
+    const PREF_YEARS = ['2020', '2019', '2018', '2015', '2010', '2000'];
+    for (const yr of PREF_YEARS) {
+      const col = yearCols.find(h => h.startsWith(yr));
+      if (col) return col;
+    }
+    // Fallback: last year column
+    return yearCols[yearCols.length - 1] || numericCols[0] || allHeaders[0];
+  }
+
+  function bestNameCol() {
+    if (options.nameCol) return options.nameCol;
+    // WB dataset: "Country Name" is the primary identifier
+    const COUNTRY_HINTS = ['country name', 'country', 'name', 'nation', 'entity', 'label', 'title'];
+    for (const hint of COUNTRY_HINTS) {
+      const m = allHeaders.find(h => h.toLowerCase().includes(hint));
+      if (m) return m;
+    }
+    return stringCols[0] || allHeaders[0];
+  }
+
+  function bestSeriesCol() {
+    if (options.seriesCol) return options.seriesCol;
+    // WB dataset: "Series Name" is the metric dimension
+    const SERIES_HINTS = ['series name', 'series', 'indicator', 'metric', 'variable', 'measure'];
+    for (const hint of SERIES_HINTS) {
+      const m = allHeaders.find(h => h.toLowerCase().includes(hint));
+      if (m) return m;
+    }
+    return stringCols[1] || stringCols[0] || allHeaders[1];
+  }
+
+  /* ── mutable config ── */
   let cfg = {
-    scoreCol      : options.scoreCol      || bestCol(SCORE_HINTS, numericCols[0] || allHeaders[0]),
-    nameCol       : options.nameCol       || bestCol(NAME_HINTS,  stringCols[0]  || allHeaders[0]),
-    studyCol      : options.studyCol      || bestCol(STUDY_HINTS, numericCols[1] || numericCols[0] || allHeaders[0]),
-    passThreshold : options.passThreshold ?? 50,
+    primaryCol    : options.primaryCol    || bestYearCol(),
+    nameCol       : bestNameCol(),
+    seriesCol     : bestSeriesCol(),
+    passThreshold : options.passThreshold ?? 70,
   };
 
   /* ── stat computation ── */
   function compute(rows, c) {
-    const scores = rows
-      .map(r => r[c.scoreCol])
+    // Extract numeric values for the primary (year) column
+    const vals = rows
+      .map(r => r[c.primaryCol])
       .filter(v => typeof v === 'number' && isFinite(v));
 
-    const studyVals = rows
-      .map(r => r[c.studyCol])
-      .filter(v => typeof v === 'number' && isFinite(v));
+    // Card 1: mean value
+    const mean = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+    const minVal = vals.length ? Math.min(...vals) : null;
+    const maxVal = vals.length ? Math.max(...vals) : null;
 
-    /* mean score */
-    const mean = scores.length
-      ? scores.reduce((s, v) => s + v, 0) / scores.length
-      : null;
-
-    /* top scorer — row with highest scoreCol value */
-    let topRow = null, topVal = -Infinity;
+    // Card 2: peak record — row with the highest value in primaryCol
+    let peakRow = null, peakVal = -Infinity;
     for (const row of rows) {
-      const v = row[c.scoreCol];
-      if (typeof v === 'number' && isFinite(v) && v > topVal) {
-        topVal = v; topRow = row;
+      const v = row[c.primaryCol];
+      if (typeof v === 'number' && isFinite(v) && v > peakVal) {
+        peakVal = v; peakRow = row;
       }
     }
+    const peakCountry = peakRow ? (peakRow[c.nameCol] ?? '—') : '—';
+    const peakSeries  = peakRow ? (peakRow[c.seriesCol] ?? '—') : '—';
 
-    /* pass rate */
-    const passCount = scores.filter(v => v >= c.passThreshold).length;
-    const passRate  = scores.length ? (passCount / scores.length) * 100 : null;
+    // Card 3: above-threshold rate (analogous to "pass rate")
+    const aboveCount = vals.filter(v => v >= c.passThreshold).length;
+    const aboveRate  = vals.length ? (aboveCount / vals.length) * 100 : null;
 
-    /* avg study hours */
-    const avgStudy = studyVals.length
-      ? studyVals.reduce((s, v) => s + v, 0) / studyVals.length
-      : null;
+    // Card 4: unique series count + non-null coverage in the primary year col
+    const uniqueSeries  = new Set(rows.map(r => r[c.seriesCol]).filter(Boolean)).size;
+    const uniqueCountries = new Set(rows.map(r => r[c.nameCol]).filter(Boolean)).size;
+    const nonNullCount  = vals.length;
+    const totalRows     = rows.length;
+    const coveragePct   = totalRows > 0 ? (nonNullCount / totalRows) * 100 : 0;
 
     return {
-      mean, topRow, topVal, topName: topRow ? topRow[c.nameCol] : null,
-      passRate, passCount, totalScored: scores.length,
-      avgStudy, studyCount: studyVals.length,
+      mean, minVal, maxVal,
+      peakVal: peakVal === -Infinity ? null : peakVal,
+      peakCountry, peakSeries,
+      aboveRate, aboveCount, totalVals: vals.length,
+      uniqueSeries, uniqueCountries, coveragePct, totalRows, nonNullCount,
     };
   }
 
@@ -2114,8 +2114,10 @@ function renderSummaryCards(data, options = {}) {
   const fpct = n => (n == null ? '—' : (+n).toFixed(1) + '%');
   const fshort = n => {
     if (n == null || !isFinite(n)) return '—';
-    if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
-    if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(2) + 'K';
+    const a = Math.abs(n);
+    if (a >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+    if (a >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+    if (a >= 1e3) return (n / 1e3).toFixed(1) + 'K';
     return (+n).toFixed(2);
   };
 
@@ -2123,117 +2125,143 @@ function renderSummaryCards(data, options = {}) {
   function render() {
     const stats = compute(data, cfg);
 
-    /* pass rate colour hint */
-    const passColour = stats.passRate == null ? 'var(--muted)'
-      : stats.passRate >= 75 ? '#4dffb4'
-      : stats.passRate >= 50 ? 'var(--accent)'
+    // Derive a short readable year label from the column name
+    const yearLabel = cfg.primaryCol.match(/\d{4}/)?.[0] ?? cfg.primaryCol;
+
+    /* above-threshold colour */
+    const threshColour = stats.aboveRate == null ? 'var(--muted)'
+      : stats.aboveRate >= 75 ? '#4dffb4'
+      : stats.aboveRate >= 50 ? 'var(--accent)'
       : 'var(--danger)';
 
-    /* delta badge for pass rate */
-    const passDelta = stats.passRate == null ? ''
-      : stats.passRate >= 75
-        ? `<span class="sc-delta up">▲ above target</span>`
-        : stats.passRate >= 50
-          ? `<span class="sc-delta neutral">≈ at threshold</span>`
-          : `<span class="sc-delta down">▼ below target</span>`;
+    const threshDelta = stats.aboveRate == null ? ''
+      : stats.aboveRate >= 75
+        ? `<span class="sc-delta up">▲ majority above threshold</span>`
+        : stats.aboveRate >= 50
+          ? `<span class="sc-delta neutral">≈ half exceed threshold</span>`
+          : `<span class="sc-delta down">▼ minority above threshold</span>`;
 
-    const topLabel = stats.topName != null
-      ? String(stats.topName).slice(0, 28) + (String(stats.topName).length > 28 ? '…' : '')
-      : '—';
+    const peakCountryLabel = String(stats.peakCountry).slice(0, 22) +
+      (String(stats.peakCountry).length > 22 ? '…' : '');
+    const peakSeriesLabel  = String(stats.peakSeries).slice(0, 30) +
+      (String(stats.peakSeries).length > 30 ? '…' : '');
 
-    /* remap selects */
-    const colOpts = (sel) => allHeaders.map(h =>
-      `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h)}</option>`
+    /* remap selects — year cols only for primary; string cols for name/series */
+    const yearOpts = (sel) => yearCols.map(h =>
+      `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h.slice(0,4))}</option>`
     ).join('');
-
-    const numOpts = (sel) => numericCols.map(h =>
+    const strOpts  = (sel) => allHeaders.map(h =>
       `<option value="${esc(h)}" ${h === sel ? 'selected' : ''}>${esc(h)}</option>`
     ).join('');
 
     mount.innerHTML = `
-      <!-- Remap bar -->
+      <!-- ── Remap bar ── -->
       <div class="sc-remap-bar">
-        <span>Score col:</span>
-        <select class="sc-remap-select" id="sc-score-col">${numOpts(cfg.scoreCol)}</select>
+        <span class="sc-remap-label">Year col:</span>
+        <select class="sc-remap-select" id="sc-primary-col">${yearOpts(cfg.primaryCol)}</select>
         <span class="sc-remap-sep">|</span>
-        <span>Name col:</span>
-        <select class="sc-remap-select" id="sc-name-col">${colOpts(cfg.nameCol)}</select>
+        <span>Country col:</span>
+        <select class="sc-remap-select" id="sc-name-col">${strOpts(cfg.nameCol)}</select>
         <span class="sc-remap-sep">|</span>
-        <span>Study hrs col:</span>
-        <select class="sc-remap-select" id="sc-study-col">${numOpts(cfg.studyCol)}</select>
+        <span>Series col:</span>
+        <select class="sc-remap-select" id="sc-series-col">${strOpts(cfg.seriesCol)}</select>
         <span class="sc-remap-sep">|</span>
-        <span>Pass ≥</span>
+        <span>Threshold ≥</span>
         <input type="number" id="sc-pass-thresh"
                value="${cfg.passThreshold}" min="0" step="1"
-               style="width:64px;background:var(--bg);border:1px solid var(--border);
+               style="width:70px;background:var(--bg);border:1px solid var(--border);
                       border-radius:var(--radius);color:var(--text);
                       font-family:var(--mono);font-size:11px;padding:4px 8px;outline:none;" />
       </div>
 
-      <!-- 4 cards -->
+      <!-- ── 4 Cards ── -->
       <div class="sc-grid">
 
-        <!-- 1. Mean Score -->
+        <!-- CARD 1 · Mean Value (primary year column)
+             Variable : primaryCol  →  e.g. "2020 [YR2020]"
+             Significance : Average of all numeric observations for the
+             selected year across every country × series row in the loaded
+             dataset. Gives a distributional anchor for the chosen year.  -->
         <div class="sc-card" style="--sc-color: var(--accent)">
-          <span class="sc-col-badge" title="${esc(cfg.scoreCol)}">${esc(cfg.scoreCol)}</span>
+          <span class="sc-col-badge" title="${esc(cfg.primaryCol)}">${esc(yearLabel)}</span>
           <span class="sc-icon">📊</span>
-          <div class="sc-metric">Mean Score</div>
-          <div class="sc-value">${f2(stats.mean)}</div>
+          <div class="sc-metric">Mean Value · ${esc(yearLabel)}</div>
+          <div class="sc-value">${fshort(stats.mean)}</div>
           <div class="sc-sub">
-            across <strong>${stats.totalScored.toLocaleString()}</strong> records<br/>
-            range: ${fshort(stats.totalScored ? Math.min(...data.map(r => r[cfg.scoreCol]).filter(v => typeof v === 'number')) : null)}
-            – ${fshort(stats.topVal === -Infinity ? null : stats.topVal)}
+            across <strong>${stats.totalVals.toLocaleString()}</strong> non-null observations<br/>
+            range: ${fshort(stats.minVal)} – ${fshort(stats.maxVal)}
           </div>
         </div>
 
-        <!-- 2. Top Scorer -->
+        <!-- CARD 2 · Peak Record
+             Variables : primaryCol (value), nameCol (Country Name),
+                         seriesCol  (Series Name)
+             Significance : Identifies the country + metric combination
+             that recorded the single highest value in the selected year.
+             Useful for spotting dominant economies (e.g. China/India for
+             population totals) or outlier metrics.  -->
         <div class="sc-card" style="--sc-color: #c084fc">
-          <span class="sc-col-badge" title="${esc(cfg.nameCol)}">${esc(cfg.nameCol)}</span>
-          <span class="sc-icon">🏆</span>
-          <div class="sc-metric">Top Scorer</div>
-          <div class="sc-value" style="font-size:${topLabel.length > 14 ? '16px' : '22px'}">${esc(topLabel)}</div>
+          <span class="sc-col-badge" title="${esc(cfg.nameCol)}">${esc(yearLabel)} peak</span>
+          <span class="sc-icon">🌍</span>
+          <div class="sc-metric">Peak Record · ${esc(yearLabel)}</div>
+          <div class="sc-value" style="font-size:${peakCountryLabel.length > 16 ? '15px' : '20px'}">${esc(peakCountryLabel)}</div>
           <div class="sc-sub">
-            score: <strong>${fshort(stats.topVal === -Infinity ? null : stats.topVal)}</strong><br/>
-            col: ${esc(cfg.scoreCol)}
+            value: <strong>${fshort(stats.peakVal)}</strong><br/>
+            series: <em title="${esc(stats.peakSeries)}">${esc(peakSeriesLabel)}</em>
           </div>
         </div>
 
-        <!-- 3. Pass Rate -->
-        <div class="sc-card" style="--sc-color: ${passColour}">
+        <!-- CARD 3 · Above-Threshold Rate
+             Variables : primaryCol (values), passThreshold (user-set, default 70)
+             Significance : Re-interprets "pass rate" as the share of data
+             rows whose selected-year value exceeds the threshold. At 70
+             this captures rows where life expectancy > 70 years — a widely
+             used development benchmark. User can adjust threshold to probe
+             other distributions (e.g. >2.1 for fertility replacement rate).  -->
+        <div class="sc-card" style="--sc-color: ${threshColour}">
           <span class="sc-col-badge" title="≥ ${cfg.passThreshold}">≥ ${cfg.passThreshold}</span>
           <span class="sc-icon">✅</span>
-          <div class="sc-metric">Pass Rate</div>
-          <div class="sc-value" style="color:${passColour}">${fpct(stats.passRate)}</div>
+          <div class="sc-metric">Above Threshold · ${esc(yearLabel)}</div>
+          <div class="sc-value" style="color:${threshColour}">${fpct(stats.aboveRate)}</div>
           <div class="sc-sub">
-            <strong>${stats.passCount.toLocaleString()}</strong> of ${stats.totalScored.toLocaleString()} passed
+            <strong>${stats.aboveCount.toLocaleString()}</strong> of
+            ${stats.totalVals.toLocaleString()} rows ≥ ${cfg.passThreshold}
           </div>
-          ${passDelta}
+          ${threshDelta}
         </div>
 
-        <!-- 4. Avg Study Hours -->
+        <!-- CARD 4 · Dataset Coverage
+             Variables : seriesCol (Series Name), nameCol (Country Name),
+                         primaryCol (non-null count)
+             Significance : The WB dataset is wide-format (one row per
+             country × series) with sparse future-year projections. This
+             card reports unique series and countries in the loaded slice,
+             plus the % of primaryCol values that are non-null — a direct
+             measure of data completeness for the chosen year.  -->
         <div class="sc-card" style="--sc-color: var(--accent2)">
-          <span class="sc-col-badge" title="${esc(cfg.studyCol)}">${esc(cfg.studyCol)}</span>
-          <span class="sc-icon">📚</span>
-          <div class="sc-metric">Avg Study Hrs</div>
-          <div class="sc-value">${f1(stats.avgStudy)}</div>
+          <span class="sc-col-badge" title="${esc(cfg.seriesCol)}">coverage</span>
+          <span class="sc-icon">📋</span>
+          <div class="sc-metric">Dataset Coverage · ${esc(yearLabel)}</div>
+          <div class="sc-value">${fpct(stats.coveragePct)}</div>
           <div class="sc-sub">
-            across <strong>${stats.studyCount.toLocaleString()}</strong> records<br/>
-            col: ${esc(cfg.studyCol)}
+            <strong>${stats.uniqueSeries.toLocaleString()}</strong> series ×
+            <strong>${stats.uniqueCountries.toLocaleString()}</strong> countries<br/>
+            ${stats.nonNullCount.toLocaleString()} / ${stats.totalRows.toLocaleString()} non-null in year col
           </div>
         </div>
 
       </div><!-- /.sc-grid -->
     `;
 
-    /* wire remap controls */
-    mount.querySelector('#sc-score-col').addEventListener('change', e => {
-      cfg.scoreCol = e.target.value; render();
+    /* ── wire remap controls ── */
+    mount.querySelector('#sc-primary-col').addEventListener('change', e => {
+      cfg.primaryCol = e.target.value; render();
     });
     mount.querySelector('#sc-name-col').addEventListener('change', e => {
       cfg.nameCol = e.target.value; render();
     });
-    mount.querySelector('#sc-study-col').addEventListener('change', e => {
-      cfg.studyCol = e.target.value; render();
+    mount.querySelector('#sc-series-col').addEventListener('change', e => {
+      cfg.seriesCol = e.target.value; render();
     });
     mount.querySelector('#sc-pass-thresh').addEventListener('change', e => {
       const v = parseFloat(e.target.value);

@@ -1494,6 +1494,19 @@
         <!-- populated by applyFilterSort() after load -->
       </div>
 
+      <!-- RENDER TABLE -->
+      <div class="section-header" style="margin-top:40px">
+        <h3>Render Table</h3>
+        <span class="pill" id="rt-row-pill">—</span>
+      </div>
+      <!-- Reset bar — shown whenever the table is in a modified state -->
+      <div id="rst-bar">
+        <span class="rst-label" id="rst-label">Table modified</span>
+        <div class="rst-snapshot-list" id="rst-snap-list"></div>
+        <button class="rst-save-btn" id="rst-save-snap-btn" title="Save current view as a named snapshot">⊕ Save snapshot</button>
+        <button class="rst-reset-btn" id="rst-reset-btn">↺ Reset to original</button>
+      </div>
+      <div id="rt-container"></div>
 
       <!-- NUMERIC STATS -->
       <div class="section-header">
@@ -1519,19 +1532,7 @@
         </table>
       </div>
 
-      <!-- RENDER TABLE -->
-      <div class="section-header" style="margin-top:40px">
-        <h3>Render Table</h3>
-        <span class="pill" id="rt-row-pill">—</span>
-      </div>
-      <!-- Reset bar — shown whenever the table is in a modified state -->
-      <div id="rst-bar">
-        <span class="rst-label" id="rst-label">Table modified</span>
-        <div class="rst-snapshot-list" id="rst-snap-list"></div>
-        <button class="rst-save-btn" id="rst-save-snap-btn" title="Save current view as a named snapshot">⊕ Save snapshot</button>
-        <button class="rst-reset-btn" id="rst-reset-btn">↺ Reset to original</button>
-      </div>
-      <div id="rt-container"></div>
+
 
       <!-- window.DS INSPECTOR -->
       <div class="section-header" style="margin-top:40px">
@@ -2327,7 +2328,9 @@ function resetTable(ds) {
   function captureState(label) {
     const rtState  = window.RT  ? window.RT.getState()  : null;
     const afsState = window.AFS ? window.AFS.getState() : null;
-    return { id: ++snapIdSeq, label: label || `Snapshot ${snapIdSeq}`, ts: new Date(), rtState, afsState };
+    // Also capture global search term from RT state
+    const searchTerm = rtState ? rtState.searchTerm : '';
+    return { id: ++snapIdSeq, label: label || `Snapshot ${snapIdSeq}`, ts: new Date(), rtState, afsState, searchTerm };
   }
 
   function renderSnapButtons() {
@@ -2341,26 +2344,33 @@ function resetTable(ds) {
     });
   }
 
-  /* ── core reset ── */
+  /* ── core reset — clears all 5 pipeline stages ── */
   function reset(silent = false) {
-    // 1. Reset renderTable internal state
+    // Stage 4 — resetTable: wipe all pipeline state back to source
+
+    // 1. Reset renderTable internal state (clears externalData → goes back to ds.rows)
     if (window.RT) {
-      window.RT.resetData();       // clears externalData, goes back to full ds.rows
+      window.RT.resetData();
     }
 
-    // 2. Reset applyFilterSort panel
+    // 2. Reset applyFilterSort panel (name-filter, sort-by, mode chips)
     if (window.AFS) {
-      window.AFS.clear();          // clears filter input, sort, chips
+      window.AFS.clear();
     }
 
-    // 3. Clear the table's own search input
-    const searchInput = document.querySelector('#rt-search-input');
-    if (searchInput) {
-      searchInput.value = '';
-      searchInput.dispatchEvent(new Event('input'));   // triggers RT's internal search reset
+    // 3. Clear the global search box via the new setSearchTerm API
+    if (window.RT && typeof window.RT.setSearchTerm === 'function') {
+      window.RT.setSearchTerm('');
+    } else {
+      // fallback: fire input event
+      const searchInput = document.querySelector('#rt-search-input');
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+      }
     }
 
-    // 4. Hide the reset bar (we're back to baseline)
+    // 4. Hide the reset bar — back to baseline
     setBarVisible(false);
 
     // 5. Log
@@ -2379,14 +2389,14 @@ function resetTable(ds) {
     return snap.id;
   }
 
-  /* ── restore snapshot ── */
+  /* ── restore snapshot — replays full pipeline through getPipelineResult() ── */
   function restoreSnapshot(id) {
     const snap = snapshots.find(s => s.id === id);
     if (!snap) return;
 
-    const { afsState, rtState } = snap;
+    const { afsState, rtState, searchTerm } = snap;
 
-    // Replay AFS state
+    // Stage 1+2+3: Replay AFS state (name-filter + sort-by → feeds pipeline base)
     if (window.AFS && afsState) {
       window.AFS.apply(
         afsState.filterVal,
@@ -2394,6 +2404,12 @@ function resetTable(ds) {
         afsState.sortDir,
         afsState.mode
       );
+    }
+
+    // Stage 3 (global search): Replay searchTerm through setSearchTerm
+    // This runs AFTER AFS so the pipeline sees: AFS result → search filter
+    if (window.RT && typeof window.RT.setSearchTerm === 'function') {
+      window.RT.setSearchTerm(searchTerm || '');
     }
 
     history.push({ action: 'restore', ts: new Date(), detail: snap.label });
@@ -2410,16 +2426,17 @@ function resetTable(ds) {
   });
 
   /* ── watch for any modification to show the reset bar ── */
-  // Proxy renderTable's applyExternal to auto-show the bar
+  // Proxy renderTable's applyExternal to auto-show bar whenever AFS pushes a view
   if (window.RT) {
     const origApply = window.RT.applyFilterSort.bind(window.RT);
-    window.RT.applyFilterSort = function(rows, sortCol, sortDir) {
-      origApply(rows, sortCol, sortDir);
+    window.RT.applyFilterSort = function(rows, _sc, _sd) {
+      origApply(rows, _sc, _sd);
       const filtered = rows?.length ?? 0;
       const total    = ds.rowCount;
-      if (filtered < total || sortCol) {
-        setBarVisible(true, `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} rows`);
-      }
+      const label = filtered < total
+        ? `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} rows`
+        : `Filter active · ${filtered.toLocaleString()} rows`;
+      setBarVisible(true, label);
     };
 
     const origReset = window.RT.resetData.bind(window.RT);
@@ -2521,7 +2538,13 @@ function applyFilterSort(ds, options = {}) {
       <button class="afs-dir-btn${sortDir === 'asc' ? ' active' : ''}" id="afs-dir-asc">▲ ASC</button>
       <button class="afs-dir-btn${sortDir === 'desc' ? ' active' : ''}" id="afs-dir-desc">▼ DESC</button>
       <button class="afs-apply-btn" id="afs-apply-btn">Apply →</button>
-      <button class="afs-clear-btn" id="afs-clear-btn">✕ Clear</button>
+      <button class="afs-clear-btn" id="afs-clear-btn">✕ Clear all</button>
+    </div>
+    <div class="afs-sort-row" style="border-bottom:none; padding-bottom:10px;">
+      <span class="afs-label">Global search</span>
+      <input class="afs-name-input" id="afs-global-search" type="text"
+             placeholder="Search all columns…" style="flex:1; min-width:200px;" />
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">searches within filtered results</span>
     </div>
     <div class="afs-status-bar" id="afs-status"></div>
   `;
@@ -2597,11 +2620,14 @@ function applyFilterSort(ds, options = {}) {
     filterVal = filterInput.value;
     sortCol   = sortColSel.value || null;
 
+    // Stage 3: filter by name column
     const filtered = ds.rows.filter(matchRow);
+    // Stage 3: sort by selected column
     const sorted   = sortRows(filtered);
     lastResult     = sorted;
 
-    /* push into renderTable if controller is live */
+    /* push the AFS result as externalData into renderTable's pipeline.
+       getPipelineResult() inside RT will then layer the global search on top. */
     if (window.RT && typeof window.RT.applyFilterSort === 'function') {
       window.RT.applyFilterSort(sorted, sortCol, sortDir);
     }
@@ -2611,6 +2637,7 @@ function applyFilterSort(ds, options = {}) {
   }
 
   function runClear() {
+    // Stage 4 (AFS clear): reset all AFS controls and push full dataset back through pipeline
     filterVal = '';  sortCol = null;  sortDir = 'asc';  mode = 'contains';
     filterInput.value = '';
     sortColSel.value  = '';
@@ -2770,45 +2797,61 @@ function renderTable(data, options = {}) {
     colBtn.classList.remove('active');
   });
 
-  /* ── search ── */
-  mount.querySelector('#rt-search-input').addEventListener('input', e => {
-    searchTerm  = e.target.value.trim().toLowerCase();
+ /* ── search only when Enter is pressed ── */
+mount.querySelector('#rt-search-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    searchTerm = e.target.value.trim().toLowerCase();
     currentPage = 1;
     redraw();
-  });
+  }
+});
 
-  /* ── core pipeline ── */
-  function getFiltered() {
-    // If applyFilterSort() has pushed an external slice, use it directly
-    if (externalData !== null) {
-      if (!searchTerm) return externalData;
-      return externalData.filter(row =>
+  /* ── unified pipeline ── */
+  /**
+   * getPipelineResult() — single function all 5 pipeline stages flow through.
+   *
+   * Order of operations:
+   *   1. loadDataset()     → populates window.DS (rows are the source of truth)
+   *   2. renderTable()     → calls getPipelineResult() on every redraw
+   *   3. applyFilterSort() → sets externalData (name-filter + sort) which
+   *                          getPipelineResult() uses as its base
+   *   4. resetTable()      → clears externalData + searchTerm, reruns pipeline
+   *   5. Snapshot system   → captures / replays full pipeline state
+   *
+   * @returns {object[]}  The final array of rows to display (filtered + sorted + searched)
+   */
+  function getPipelineResult() {
+    // Stage 1 — base: either AFS-filtered slice or the full dataset
+    let base = externalData !== null ? externalData : data;
+
+    // Stage 2 — global search (applied on top of whatever AFS produced)
+    if (searchTerm) {
+      base = base.filter(row =>
         visibleCols.some(col => {
           const v = row[col];
           return v !== null && v !== undefined && String(v).toLowerCase().includes(searchTerm);
         })
       );
     }
-    if (!searchTerm) return data;
-    return data.filter(row =>
-      visibleCols.some(col => {
-        const v = row[col];
-        return v !== null && v !== undefined && String(v).toLowerCase().includes(searchTerm);
-      })
-    );
+
+    // Stage 3 — table-header sort (applied last so it can override AFS sort)
+    if (sortCol) {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      base = [...base].sort((a, b) => {
+        const av = a[sortCol], bv = b[sortCol];
+        if (av === null || av === undefined) return 1;
+        if (bv === null || bv === undefined) return -1;
+        if (typeof av === 'number' && typeof bv === 'number') return dir * (av - bv);
+        return dir * String(av).localeCompare(String(bv), undefined, { numeric: true });
+      });
+    }
+
+    return base;
   }
 
-  function getSorted(rows) {
-    if (!sortCol) return rows;
-    const dir = sortDir === 'asc' ? 1 : -1;
-    return [...rows].sort((a, b) => {
-      const av = a[sortCol], bv = b[sortCol];
-      if (av === null || av === undefined) return 1;
-      if (bv === null || bv === undefined) return -1;
-      if (typeof av === 'number' && typeof bv === 'number') return dir * (av - bv);
-      return dir * String(av).localeCompare(String(bv), undefined, { numeric: true });
-    });
-  }
+  // Kept for AFS compatibility — AFS calls this after it produces its sorted slice
+  function getFiltered() { return getPipelineResult(); }
+  function getSorted(rows) { return rows; }  // sorting is now inside getPipelineResult
 
   function highlight(str) {
     if (!searchTerm) return esc(str);
@@ -2823,8 +2866,7 @@ function renderTable(data, options = {}) {
   }
 
   function redraw() {
-    const filtered = getFiltered();
-    const sorted   = getSorted(filtered);
+    const sorted   = getPipelineResult();
     const total    = sorted.length;
     const pages    = Math.max(1, Math.ceil(total / pageSize));
     currentPage    = Math.min(currentPage, pages);
@@ -2836,7 +2878,7 @@ function renderTable(data, options = {}) {
     const pill = document.getElementById('rt-row-pill');
     if (pill) pill.textContent = `${total.toLocaleString()} rows`;
     mount.querySelector('#rt-match-count').textContent =
-      searchTerm ? `${total.toLocaleString()} match${total !== 1 ? 'es' : ''}` : `${data.length.toLocaleString()} rows`;
+      searchTerm ? `${total.toLocaleString()} match${total !== 1 ? 'es' : ''}` : `${(externalData !== null ? externalData : data).length.toLocaleString()} rows`;
 
     /* thead */
     const thead = mount.querySelector('#rt-thead');
@@ -2952,11 +2994,16 @@ function renderTable(data, options = {}) {
 
   /* ── expose applyFilterSort hook ──
      Called by applyFilterSort() to push a pre-filtered+sorted
-     slice into this table instance, overriding the internal pipeline.  */
+     slice into this table instance as the pipeline base.
+     AFS has already sorted the rows; we do NOT sync sortCol here
+     so getPipelineResult() won't double-sort. Table-header clicks
+     still set sortCol independently and override AFS order.  */
   function applyExternal(rows, newSortCol, newSortDir) {
     externalData = rows;
-    if (newSortCol !== undefined) sortCol = newSortCol;
-    if (newSortDir !== undefined) sortDir = newSortDir;
+    // Reset table-header sort so we don't double-sort AFS's already-sorted rows.
+    // A subsequent header click will re-set sortCol if the user wants to override.
+    sortCol = null;
+    sortDir = 'asc';
     currentPage = 1;
     redraw();
   }
@@ -2965,8 +3012,16 @@ function renderTable(data, options = {}) {
   return {
     redraw,
     applyFilterSort : applyExternal,
-    resetData       : () => { externalData = null; currentPage = 1; redraw(); },
+    resetData       : () => { externalData = null; sortCol = null; sortDir = 'asc'; currentPage = 1; redraw(); },
     getState        : () => ({ sortCol, sortDir, searchTerm, currentPage, pageSize, visibleCols, isFiltered: externalData !== null }),
+    getSearchTerm   : () => searchTerm,
+    setSearchTerm   : (term) => {
+      searchTerm = term;
+      const si = mount.querySelector('#rt-search-input');
+      if (si) si.value = term;
+      currentPage = 1;
+      redraw();
+    },
   };
 }
 

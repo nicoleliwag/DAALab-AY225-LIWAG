@@ -2291,28 +2291,116 @@ function renderWBAnalysis() {
 
   const seriesData = lookup[selectedSeries] || {};
 
-  // Flatten values of first country in selected range
+  // Build per-country value arrays for the selected year range
+  const countryVals = selectedCountries.map(code => ({
+    code,
+    name: st.countryMap[code] || code,
+    vals: (seriesData[code] || []).slice(yearStart, yearEnd + 1).filter(v => v !== null && isFinite(v)),
+  })).filter(c => c.vals.length > 0);
+
+  if (!countryVals.length) return;
+
+  // If multiple countries selected: use pooled/cross-country stats
+  const isMulti = countryVals.length > 1;
+
+  // For single stats panel: use first country; for multi use all latest values
   const code0 = selectedCountries[0];
-  const vals0 = (seriesData[code0] || []).slice(yearStart, yearEnd+1).filter(v => v !== null && isFinite(v));
+  const vals0 = countryVals[0].vals;
 
-  const minV = vals0.length ? Math.min(...vals0) : 0;
-  const maxV = vals0.length ? Math.max(...vals0) : 0;
-  const varV = variance(vals0);
-  const sdV  = stdDev(vals0);
+  // Pooled latest-year values across all selected countries (for cross-country stats)
+  const latestVals = countryVals.map(c => {
+    const arr = (seriesData[c.code] || []).slice(yearStart, yearEnd + 1);
+    return [...arr].reverse().find(v => v !== null && isFinite(v)) ?? null;
+  }).filter(v => v !== null);
 
-  document.getElementById('an').textContent       = vals0.length;
+  // Stats: if multi-country, show cross-country stats on latest year; else show time-series stats
+  const statsVals = isMulti ? latestVals : vals0;
+  const minV = statsVals.length ? Math.min(...statsVals) : 0;
+  const maxV = statsVals.length ? Math.max(...statsVals) : 0;
+  const varV = variance(statsVals);
+  const sdV  = stdDev(statsVals);
+
+  const descTitle = document.getElementById('desc-tile-title');
+  if (isMulti) {
+    document.getElementById('an').textContent       = countryVals.length;
+    if (descTitle) descTitle.textContent = `Cross-country Stats · ${yearLabels[yearEnd]}`;
+    const kMin = document.getElementById('k-min'); if(kMin) kMin.textContent = 'Min (across countries)';
+    const kMax = document.getElementById('k-max'); if(kMax) kMax.textContent = 'Max (across countries)';
+  } else {
+    document.getElementById('an').textContent       = vals0.length;
+    if (descTitle) descTitle.textContent = `Stats · ${st.countryMap[code0]||code0}`;
+    const kMin = document.getElementById('k-min'); if(kMin) kMin.textContent = `Min (${yearLabels[yearStart]})`;
+    const kMax = document.getElementById('k-max'); if(kMax) kMax.textContent = `Max (${yearLabels[yearStart]}–${yearLabels[yearEnd]})`;
+  }
+
   document.getElementById('aMin').textContent      = fmtStat(minV);
   document.getElementById('aMax').textContent      = fmtStat(maxV);
   document.getElementById('aRange').textContent    = fmtStat(maxV - minV);
   document.getElementById('aVariance').textContent = fmtStat(varV);
   document.getElementById('aStdDev').textContent   = fmtStat(sdV);
-  const descTitle = document.getElementById('desc-tile-title');
-  if (descTitle) descTitle.textContent = `Stats · ${st.countryMap[code0]||code0}`;
-  const kMin = document.getElementById('k-min'); if(kMin) kMin.textContent = `Min (${yearLabels[yearStart]})`;
-  const kMax = document.getElementById('k-max'); if(kMax) kMax.textContent = `Max (${yearLabels[yearStart]}–${yearLabels[yearEnd]})`;
 
-  // Correlation: year index vs value (trend direction)
-  if (vals0.length >= 3) {
+  // Correlation section: multi = cross-country ranking correlation; single = time-series trend
+  if (isMulti && latestVals.length >= 2) {
+    // Find country with highest and lowest latest value
+    const ranked = countryVals
+      .map(c => {
+        const arr = (seriesData[c.code] || []).slice(yearStart, yearEnd + 1);
+        const v = [...arr].reverse().find(x => x !== null && isFinite(x)) ?? null;
+        return { ...c, latest: v };
+      })
+      .filter(c => c.latest !== null)
+      .sort((a, b) => b.latest - a.latest);
+
+    const highest = ranked[0];
+    const lowest  = ranked[ranked.length - 1];
+
+    // Growth rates for each country
+    const growthRates = countryVals.map(c => {
+      const arr = (seriesData[c.code] || []).slice(yearStart, yearEnd + 1);
+      const start = arr.find(v => v !== null && isFinite(v));
+      const end   = [...arr].reverse().find(v => v !== null && isFinite(v));
+      if (start == null || end == null || start === 0) return null;
+      return ((end - start) / Math.abs(start)) * 100;
+    }).filter(v => v !== null);
+
+    const fastestIdx = growthRates.indexOf(Math.max(...growthRates));
+    const fastestGrowth = countryVals[fastestIdx];
+
+    const kR1 = document.getElementById('k-r1'); if(kR1) kR1.textContent = `Highest in ${yearLabels[yearEnd]}`;
+    const kR2 = document.getElementById('k-r2'); if(kR2) kR2.textContent = `Lowest in ${yearLabels[yearEnd]}`;
+    document.getElementById('rPearson').textContent  = fmtBig(highest?.latest ?? 0);
+    document.getElementById('rInterp').textContent   = highest?.name || '—';
+    document.getElementById('rPearson2').textContent = fmtBig(lowest?.latest ?? 0);
+    document.getElementById('rInterp2').textContent  = lowest?.name || '—';
+    document.getElementById('rStronger').textContent = fastestGrowth?.name || '—';
+    document.getElementById('rDirection').textContent = growthRates.length
+      ? (Math.max(...growthRates) >= 0 ? 'Fastest growth' : 'Least decline')
+      : '—';
+
+    // Regression: rank (1..n) vs latest value — shows spread shape
+    const xs  = ranked.map((_, i) => i + 1);
+    const ys  = ranked.map(c => c.latest);
+    const reg = linearRegression(xs, ys);
+
+    document.getElementById('regEquation').textContent  = `${highest?.name||'—'} leads; spread = ${fmtBig(maxV - minV)}`;
+    document.getElementById('regSlope').textContent     = ranked.length;
+    document.getElementById('regIntercept').textContent = fmtStat(s2Mean(latestVals));
+    document.getElementById('regR2').textContent        = reg.rSquared.toFixed(4);
+    document.getElementById('regInterp').textContent    = reg.rSquared >= 0.9 ? 'Uniform spread' : reg.rSquared >= 0.7 ? 'Near-linear spread' : 'Uneven spread';
+    document.getElementById('regPredict').textContent   = fmtStat(s2Mean(latestVals));
+    const kPred = document.getElementById('k-predict'); if(kPred) kPred.textContent = 'Mean across selection';
+
+    const kStronger = document.getElementById('k-r1');
+    // Reuse the slope/intercept labels for rank display
+    const kSlope = document.querySelector('[data-key="slope"]') || document.getElementById('regSlope')?.parentElement?.querySelector('.stat-key');
+    // Update adjacent label text nodes if possible
+    const regSlopeKey = document.getElementById('regSlope')?.closest('.stat-row')?.querySelector('.stat-key');
+    if (regSlopeKey) regSlopeKey.textContent = '# countries';
+    const regInterceptKey = document.getElementById('regIntercept')?.closest('.stat-row')?.querySelector('.stat-key');
+    if (regInterceptKey) regInterceptKey.textContent = 'Mean value';
+
+  } else if (vals0.length >= 3) {
+    // Single-country time-series analysis
     const xs = vals0.map((_,i) => i);
     const r1 = pearsonCorr(xs, vals0);
     const reg = linearRegression(xs, vals0);
@@ -2348,24 +2436,28 @@ function renderWBInsights() {
   const earliest = yearLabels[yearStart];
 
   // Per-country change summary
-  const summaries = selectedCountries.slice(0,5).map((code, i) => {
+  const summaries = selectedCountries.map((code, i) => {
     const arr  = (seriesData[code] || []).slice(yearStart, yearEnd+1);
-    const start = arr.find(v => v !== null);
-    const end   = [...arr].reverse().find(v => v !== null);
+    const start = arr.find(v => v !== null && isFinite(v));
+    const end   = [...arr].reverse().find(v => v !== null && isFinite(v));
     if (start == null || end == null) return null;
     const change = end - start;
-    const pct    = ((change / Math.abs(start)) * 100).toFixed(1);
+    const pct    = start !== 0 ? ((change / Math.abs(start)) * 100).toFixed(1) : '—';
     const dir    = change >= 0 ? 'increased' : 'decreased';
     const color  = S2_PALETTE[i % S2_PALETTE.length];
-    return `<span style="color:${color}">${esc(st.countryMap[code]||code)}</span>: `+
-      `${dir} from <strong>${fmtBig(start)}</strong> to <strong>${fmtBig(end)}</strong> `+
-      `(${change>=0?'+':''}${fmtBig(change)}, ${change>=0?'+':''}${pct}%)`;
+    return {
+      html: `<span style="color:${color}">${esc(st.countryMap[code]||code)}</span>: `+
+        `${dir} from <strong>${fmtBig(start)}</strong> to <strong>${fmtBig(end)}</strong> `+
+        `(${change>=0?'+':''}${fmtBig(change)}, ${change>=0?'+':''}${pct}%)`,
+      change: typeof pct === 'string' ? 0 : parseFloat(pct),
+      end, start, code, name: st.countryMap[code] || code, color,
+    };
   }).filter(Boolean);
 
   const worldVal = (() => {
     const d = lookup[selectedSeries];
     if (!d || !d['WLD']) return null;
-    return [...(d['WLD']||[])].reverse().find(v => v !== null);
+    return [...(d['WLD']||[])].reverse().find(v => v !== null && isFinite(v));
   })();
 
   let html = `<p class="insight-text">`;
@@ -2373,9 +2465,49 @@ function renderWBInsights() {
   html += `<span class="highlight">${earliest}</span> to <span class="highlight">${latest}</span>`;
   if (worldVal !== null) html += ` · World: <span class="highlight">${fmtBig(worldVal)}</span>`;
   html += `.<br><br>`;
+
   if (summaries.length) {
-    html += summaries.join('<br>');
+    html += summaries.map(s => s.html).join('<br>');
   }
+
+  // Cross-country comparative insights (only when 2+ countries selected)
+  if (summaries.length >= 2) {
+    const withEnd = summaries.filter(s => s.end != null);
+    if (withEnd.length >= 2) {
+      const ranked = [...withEnd].sort((a, b) => b.end - a.end);
+      const leader = ranked[0];
+      const trailer = ranked[ranked.length - 1];
+      const gap = leader.end - trailer.end;
+      const gapPct = trailer.end !== 0 ? ((gap / Math.abs(trailer.end)) * 100).toFixed(1) : null;
+
+      html += `<br><br>`;
+      html += `<strong>Ranking in ${latest}:</strong> `;
+      html += ranked.map((s, i) =>
+        `<span style="color:${s.color}">${i+1}. ${esc(s.name)}</span> (${fmtBig(s.end)})`
+      ).join(' · ');
+
+      html += `<br>`;
+      html += `<span style="color:${leader.color}">${esc(leader.name)}</span> leads by `;
+      html += `<span class="highlight">${fmtBig(gap)}</span>`;
+      if (gapPct) html += ` (<span class="highlight">${gapPct}%</span>)`;
+      html += ` over <span style="color:${trailer.color}">${esc(trailer.name)}</span>.`;
+
+      // Fastest grower
+      const withChange = summaries.filter(s => isFinite(s.change));
+      if (withChange.length >= 2) {
+        const fastest  = [...withChange].sort((a, b) => b.change - a.change)[0];
+        const slowest  = [...withChange].sort((a, b) => a.change - b.change)[0];
+        html += `<br><span style="color:${fastest.color}">${esc(fastest.name)}</span> grew fastest`;
+        html += ` (<span class="highlight">${fastest.change >= 0 ? '+' : ''}${fastest.change.toFixed(1)}%</span>)`;
+        if (slowest.code !== fastest.code) {
+          html += `; <span style="color:${slowest.color}">${esc(slowest.name)}</span> was slowest`;
+          html += ` (<span class="highlight">${slowest.change >= 0 ? '+' : ''}${slowest.change.toFixed(1)}%</span>)`;
+        }
+        html += `.`;
+      }
+    }
+  }
+
   // Quick insight for well-known series
   if (selectedSeries.includes('Life expectancy')) {
     html += `<br><br><em style="color:var(--muted)">Life expectancy has risen globally due to improvements in medicine, sanitation, and nutrition.</em>`;
@@ -2755,4 +2887,3 @@ function renderInsights(data, primaryCol) {
 }
 
 /* ══ END STUDENT 2 CONTRIBUTION ZONE ══ */
-
